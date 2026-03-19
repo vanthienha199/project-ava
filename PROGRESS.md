@@ -1,5 +1,5 @@
 # Project Ava — Full Progress & Context for New Chat
-**Last Updated:** March 18, 2026
+**Last Updated:** March 19, 2026, 1:30 AM EST
 **Author:** Ha Le (halevanthien@gmail.com)
 **READ THIS FILE 100% BEFORE DOING ANYTHING**
 
@@ -7,276 +7,328 @@
 
 ## WHAT IS THIS PROJECT?
 
-Project Ava (Automated Intelligent Verification with Agents) is an **AI agent that automatically generates hardware verification testbenches**. Given a Verilog design file + natural language spec, the agent generates a cocotb (Python) testbench, runs simulation, and self-corrects until tests pass.
+Project Ava (Automated Intelligent Verification with Agents) is a **working AI agent that automatically generates hardware verification testbenches**. Given a Verilog design file + natural language spec, the agent generates a cocotb (Python) testbench, runs Icarus Verilog simulation, and self-corrects until tests pass.
+
+### CURRENT STATUS: WORKING AGENT — 7/7 DESIGNS, 63/63 TESTS
+
+The agent is **fully built and functional**. It has been tested on 7 designs including power-aware RTL that no other AI tool can verify. Benchmark results from March 19, 2026:
+
+| Design | Type | Tests | Iterations | Self-corrected? | Time |
+|---|---|---|---|---|---|
+| 01_adder | Functional | 5/5 | 1 | No | 15s |
+| 02_alu | Functional | 9/9 | 3 | Yes (2 corrections) | 78s |
+| 03_icg (clock gating) | **Power-aware** | 7/7 | 1 | No | 33s |
+| 04_counter | Sequential | 5/5 | 1 | No | 13s |
+| 05_freq_divider | **Power-aware (DVFS)** | 7/7 | 2 | Yes (1 correction) | 110s |
+| 06_power_fsm | **Power-aware** | 17/17 | 4 | Yes (3 corrections) | 173s |
+| 07_dvfs_controller | **Power-aware (DVFS)** | 13/13 | 3 | Yes (2 corrections) | 150s |
+
+**Total: 7/7 designs passed, 63/63 tests, 100% pass rate.**
 
 ### Who It Serves
-1. **ACM Club Project** — Ha Le is on the Agent + Automation teams. Dylan is PM. AMD funds the project via Rex McCurry (AMD Orlando Site Lead). 16 students, 4 teams. Semester goal: "one agent that can generate a verification test bench."
-2. **Dr. Di Wu's Lab (Unary Lab, UCF)** — Ha Le's research advisor. Dr. Wu asked Ha Le to research agentic AI systems over spring break: "how such systems are built, what system components are needed, which parts on CPU vs GPU." This project IS that research — a real agentic AI system Ha Le is building and measuring.
-3. **Personal Research** — No existing verification agent targets power-aware RTL (DVFS, clock gating). This is the gap. If Ha Le fills it, it's a real research contribution that impresses AMD.
+1. **ACM Club Project** — Ha Le is on the Agent + Automation teams. Dylan is PM. AMD funds the project via Rex McCurry (AMD Orlando Site Lead). 16 students, 4 teams (Agents, Automation, FPGA Dev, Research). Semester goal: "one agent that can generate a verification test bench."
+2. **Dr. Di Wu's Lab (Unary Lab, UCF)** — Ha Le's research advisor. Dr. Wu asked Ha Le to research agentic AI systems. This project IS that research.
+3. **Personal Research / Breakthrough** — Must be something big companies (AMD etc.) would want to buy/license. Power-aware verification is the untouched gap — nobody else has built an AI agent for DVFS, clock gating, or power state machine verification.
 
-### The Unique Angle (IMPORTANT)
-Derek Martin (AMD engineer, spoke at ACM panel March 4) works on "features that turn stuff off to save power" — DVFS verification. Dr. Wu's Lit Silicon paper is about thermal imbalance causing DVFS throttling. **Ha Le connects both**: build a verification agent specifically for power management RTL. Nobody else has done this.
+### Target Users (decided March 19)
+- **Primary (A):** Verification engineers at companies like AMD — CLI tool, assumes HDL knowledge, outputs coverage metrics
+- **Secondary (D):** Researchers — metrics, benchmarks, reproducible results, comparison tables for papers
+
+### The Unique Angle
+Derek Martin (AMD engineer, ACM panel March 4) works on "features that turn stuff off to save power" — DVFS verification. Dr. Wu's Lit Silicon paper is about thermal imbalance causing DVFS throttling. **Project Ava connects both**: an AI verification agent specifically for power management RTL. Nobody else has done this.
+
+**Important nuance (from critical review):** The Lit Silicon connection is **motivational, not technical**. Lit Silicon proves DVFS bugs matter (stragglers cost throughput). Project Ava prevents those bugs at design time. Don't claim "thermal-informed test generation" unless you actually build it — do claim "motivated by real-world DVFS failures documented in Lit Silicon."
 
 ---
 
-## ENVIRONMENT — VERIFIED WORKING (March 18, 2026)
+## WHAT EXISTS RIGHT NOW (March 19, 2026)
+
+### Project Structure
+```
+/Users/hale/projects/project-ava/
+├── .git/                          ← GitHub: github.com/vanthienha199/project-ava (3 commits pushed)
+├── .gitignore
+├── CLAUDE.md                      ← Instructions for Claude Code
+├── PROGRESS.md                    ← THIS FILE
+├── venv/                          ← Python 3.13 virtualenv with cocotb 2.0.1
+├── src/
+│   ├── __init__.py
+│   ├── __main__.py                ← CLI entry point (python3 -m src benchmark)
+│   ├── llm.py                     ← LLM wrapper (Claude CLI, Anthropic API, Ollama)
+│   ├── generator.py               ← Prompt-based testbench generation + cocotb 2.0 auto-fixes
+│   ├── simulator.py               ← Icarus Verilog runner with structured result parsing
+│   ├── corrector.py               ← Error-feedback correction loop
+│   ├── agent.py                   ← Two-tier orchestrator (max 3 corrections, max 10 reboots)
+│   └── analyzer.py                ← Failure taxonomy (9 error categories)
+├── prompts/
+│   ├── v1_generate.txt            ← Generation prompt template (includes cocotb 2.0 rules)
+│   └── v1_correct.txt             ← Correction prompt template
+├── golden/                        ← Golden test suite (7 designs)
+│   ├── 01_adder/                  ← 4-bit adder (combinational)
+│   ├── 02_alu/                    ← 8-bit ALU (5 ops + zero flag)
+│   ├── 03_icg/                    ← Integrated clock gating cell (POWER-AWARE)
+│   ├── 04_counter/                ← 4-bit counter (sequential)
+│   ├── 05_freq_divider/           ← Divide-by-2/4/8 (POWER-AWARE, DVFS component)
+│   ├── 06_power_fsm/              ← Power state machine with thermal throttling (POWER-AWARE)
+│   └── 07_dvfs_controller/        ← Full DVFS controller (POWER-AWARE, the research gap)
+├── runs/                          ← Auto-generated JSON run logs (gitignored)
+├── research/
+│   ├── RESEARCH_FINDINGS.md       ← cocotb 2.0 traps, CorrectBench algorithm, prompt rules
+│   ├── cocotb_test/               ← Working adder test (reference)
+│   ├── claude_gen_test/           ← Claude-generated ALU test (reference)
+│   ├── icg_test/                  ← ICG proof-of-concept (hand-written + LLM-generated)
+│   └── iiitb_cg/                  ← Cloned ICG repo (github.com/drvasanthi/iiitb_cg)
+├── test_agent_icg.py              ← Single design test script
+├── test_agent_all.py              ← Multi-design test script
+├── test_new_designs.py            ← Power-aware designs test script
+├── test_simulator.py              ← Simulator module test
+└── test_cli_benchmark.py          ← CLI benchmark test
+```
+
+### How to Run
+
+```bash
+# Activate venv (ALWAYS do this first)
+source /Users/hale/projects/project-ava/venv/bin/activate
+
+# Run benchmark on all 7 golden designs
+python3 -m src benchmark
+
+# Run on a single design directory
+python3 -m src run --design-dir golden/07_dvfs_controller
+
+# Run on a single Verilog file with inline spec
+python3 -m src run --design path/to/file.v --spec "description here" --toplevel module_name
+```
+
+### Git (3 commits pushed to main)
+```
+f58248f — Initial release: agentic hardware verification framework
+4e9671a — Add power state machine and DVFS controller to golden suite
+dfa19c7 — Add failure analysis taxonomy to agent pipeline
+```
+
+---
+
+## ENVIRONMENT — VERIFIED WORKING
 
 ### This Mac (M4, 16GB, macOS Sequoia)
 ```
-Python 3.14.3          — system (too new for cocotb)
-Python 3.13.12         — /opt/homebrew/opt/python@3.13/bin/python3.13
+Python 3.13.12         — in venv (cocotb 2.0 needs ≤3.13, system has 3.14)
 Icarus Verilog 13.0    — brew install icarus-verilog ✓
 Verilator 5.046        — brew install verilator ✓
 Ollama 0.18.1          — brew install ollama ✓ (service running)
 DeepSeek-Coder 6.7B    — ollama pull deepseek-coder:6.7b ✓ (3.8GB)
-cocotb 2.0.1           — in project venv (Python 3.13) ✓
-Homebrew 5.1.0         — ✓
-Docker                 — installed ✓
-Git 2.39.5             — ✓
-Node v18.20.8          — ✓
-```
-
-### Project Location & Repo
-```
-/Users/hale/projects/project-ava/
-├── venv/                          ← Python 3.13 virtualenv with cocotb 2.0.1
-├── research/
-│   ├── RESEARCH_FINDINGS.md       ← ALL research findings (cocotb 2.0 traps, CorrectBench architecture, etc.)
-│   ├── cocotb_test/               ← Working cocotb test (adder, 2/2 pass)
-│   └── claude_gen_test/           ← Claude-generated ALU testbench (7/7 pass after fix)
-│       ├── alu.v                  ← 8-bit ALU (add/sub/and/or/xor + zero flag)
-│       ├── test_alu.py            ← Claude-generated cocotb testbench (FIXED for 2.0 API)
-│       └── Makefile
-├── PROGRESS.md                    ← THIS FILE
-└── .git/                          ← GitHub: github.com/vanthienha199/project-ava
+cocotb 2.0.1           — in project venv ✓
 ```
 
 ### Virtual Environment
 ```bash
-# ALWAYS activate before running cocotb:
 source /Users/hale/projects/project-ava/venv/bin/activate
-
-# This venv uses Python 3.13 (cocotb 2.0 requires max 3.13, system has 3.14)
 ```
 
-### GitHub Repo
-- URL: https://github.com/vanthienha199/project-ava
-- Public repo, created March 18, 2026
-- No commits pushed yet (initial setup only)
-
-### Other Hardware Available
-- **Alienware 16 Area 51 (AA16250):** Intel Ultra 9 275HX, RTX 5070Ti/5080 (8-16GB VRAM), 32GB DDR5, 2TB SSD — from Dr. Wu's lab. Can run DeepSeek-Coder-33B locally via Ollama. Not yet set up for SSH from Mac.
-- **AMD hpcfund.amd.com:** MI300X GPUs — access NOT granted yet (SSH rejected as of March 18). This is for lit_silicon work, NOT for Project Ava.
+### Other Hardware
+- **Alienware 16 Area 51 (AA16250):** Intel Ultra 9 275HX, RTX 5070Ti/5080 (8-16GB VRAM), 32GB DDR5, 2TB SSD — from Dr. Wu's lab. Can run DeepSeek-Coder-33B locally via Ollama. **Not yet set up for SSH from Mac.**
 
 ---
 
-## LLM STRATEGY
+## ARCHITECTURE — WHAT'S BUILT
 
-### Primary: `claude -p` (Ha Le's Claude Max Plan)
-```bash
-echo "your prompt here" | claude -p
-```
-- FREE (included in Max subscription)
-- Best quality for code generation
-- ~3-5 sec per call
-- **CRITICAL:** Claude does NOT know cocotb 2.0 API. Every prompt MUST include the 10 cocotb rules from RESEARCH_FINDINGS.md section 5.
-
-### Backup: Ollama (Local, Free)
-```bash
-curl -s http://localhost:11434/api/generate -d '{"model":"deepseek-coder:6.7b","prompt":"...","stream":false}' | python3 -c "import sys,json; print(json.load(sys.stdin)['response'])"
-```
-- Free, unlimited, no rate limits
-- Lower quality than Claude
-- Good for rapid iteration during development
-
-### Future: Alienware with DeepSeek-Coder-33B
-- Much better quality than 6.7B
-- Needs Alienware SSH setup first
-
----
-
-## CRITICAL DISCOVERY: cocotb 2.0 API BREAKS ALL LLM-GENERATED CODE
-
-**This is the single most important finding.** On March 18, we tested `claude -p` generating a cocotb testbench for an 8-bit ALU. Claude produced excellent logic but used cocotb 1.x API syntax. Result: **7/7 tests FAILED.**
-
-After applying cocotb 2.0 fixes (replacing `.value.integer` with `int(.value)`, `units=` with `unit=`): **7/7 tests PASSED.**
-
-**Conclusion:** The prompt template MUST include cocotb 2.0 rules or the agent will never work. See RESEARCH_FINDINGS.md section 1 for all 24 breaking changes, and section 5 for the 10 rules that must be in every prompt.
-
----
-
-## ARCHITECTURE TO BUILD
-
-### Agent Pipeline (Based on CorrectBench + UVM² Research)
-
+### Agent Pipeline (Working)
 ```
 Input: Verilog DUT file + natural language spec
                     ↓
 ┌─────────────────────────────────────────────┐
-│  PHASE 1: ANALYZE                            │
-│  Read DUT → identify ports, operations,      │
-│  clock/reset, and generate test plan         │
+│  GENERATE (src/generator.py)                 │
+│  Load prompt template → insert Verilog +     │
+│  spec + cocotb 2.0 rules → call LLM →       │
+│  strip markdown fences → auto-fix cocotb API │
 └──────────────────┬──────────────────────────┘
                     ↓
 ┌─────────────────────────────────────────────┐
-│  PHASE 2: GENERATE                           │
-│  LLM generates cocotb testbench + Makefile   │
-│  (with cocotb 2.0 rules in prompt)           │
+│  SIMULATE (src/simulator.py)                 │
+│  Write testbench to temp dir → make          │
+│  SIM=icarus → parse output → structured      │
+│  SimResult (pass/fail, test details, errors)  │
 └──────────────────┬──────────────────────────┘
                     ↓
 ┌─────────────────────────────────────────────┐
-│  PHASE 3: SIMULATE                           │
-│  make SIM=icarus → compile + run             │
-│  Parse output: PASS/FAIL + error messages    │
+│  SELF-CORRECT (src/corrector.py + agent.py)  │
+│  If FAIL: analyze errors → categorize →      │
+│  feed to LLM corrector (max 3 attempts)      │
+│  If still FAIL: reboot (regenerate fresh,    │
+│  max 10 attempts)                            │
 └──────────────────┬──────────────────────────┘
                     ↓
-┌─────────────────────────────────────────────┐
-│  PHASE 4: SELF-CORRECT (if FAIL)             │
-│  Two-tier loop (from CorrectBench):          │
-│  - Correction: feed errors to LLM, fix TB    │
-│    (max 3 attempts)                          │
-│  - Reboot: regenerate TB from scratch         │
-│    (max 10 attempts)                         │
-│  Corrector gets: error msg + TB code + spec   │
-└──────────────────┬──────────────────────────┘
-                    ↓
-Output: Working testbench + simulation results + run log
+Output: Working testbench + SimResult + JSON run log
 ```
 
-### Key Design Principles (from research)
-1. **LLM wrapper:** Abstract the LLM so we can swap claude -p / Ollama / DeepSeek API without changing agent code
-2. **Prompts as files:** Store all prompts in `prompts/` directory with version numbers, never inline
-3. **Log everything:** Every run saves: prompt sent, LLM response, generated testbench, simulation log, pass/fail, iterations, tokens, time
-4. **Golden test suite:** 10-15 Verilog designs with known-good testbenches for regression testing
-5. **Modular pipeline:** Each phase (Analyze, Generate, Simulate, Correct) is a separate module — can swap individually
-6. **cocotb not UVM:** LLMs are much better at Python than SystemVerilog. Can add UVM later as a Generator module swap.
+### Key Modules
 
-### Proposed Project Structure
-```
-project-ava/
-├── venv/                          ← Python 3.13 + cocotb 2.0.1
-├── src/
-│   ├── agent.py                   ← Main orchestrator (the pipeline loop)
-│   ├── analyzer.py                ← Phase 1: Parse DUT, generate test plan
-│   ├── generator.py               ← Phase 2: LLM generates cocotb testbench
-│   ├── simulator.py               ← Phase 3: Run icarus verilog, parse results
-│   ├── corrector.py               ← Phase 4: Self-correction with error feedback
-│   └── llm.py                     ← LLM wrapper (claude -p / ollama / API)
-├── prompts/
-│   ├── v1_analyze.txt             ← Prompt for DUT analysis
-│   ├── v1_generate.txt            ← Prompt for testbench generation (includes cocotb 2.0 rules)
-│   ├── v1_correct.txt             ← Prompt for error correction
-│   └── CHANGELOG.md
-├── golden/                        ← Golden test suite (DUT + known-good testbench pairs)
-│   ├── 01_adder/
-│   ├── 02_alu/
-│   ├── 03_counter/
-│   └── ...
-├── runs/                          ← Auto-generated run logs (timestamped)
-├── research/
-│   ├── RESEARCH_FINDINGS.md       ← All pre-implementation research
-│   ├── cocotb_test/               ← Working cocotb examples
-│   └── claude_gen_test/           ← Claude generation test (ALU, 7/7 pass)
-├── PROGRESS.md                    ← THIS FILE
-├── CLAUDE.md                      ← Instructions for Claude Code
-└── .gitignore
-```
+**src/llm.py** — LLM wrapper with 3 backends:
+- `claude_cli`: calls `claude -p` via subprocess (free with Max plan)
+- `anthropic_api`: calls Anthropic API via urllib (needs ANTHROPIC_API_KEY)
+- `ollama`: calls Ollama local API (free, localhost:11434)
+- Returns: LLMResponse(text, model, tokens_in, tokens_out, latency_ms)
+
+**src/generator.py** — Builds prompt from template, calls LLM, cleans output:
+- Loads `prompts/v1_generate.txt` template
+- Strips markdown code fences (LLMs wrap output in ```python```)
+- Auto-fixes 8 known cocotb 2.0 API errors (units→unit, fork→start_soon, etc.)
+
+**src/simulator.py** — Runs cocotb via Icarus Verilog:
+- Creates temp directory, copies Verilog files, writes Makefile + test module
+- Runs `make SIM=icarus`, parses output with regex
+- Returns SimResult with individual test pass/fail, timing, and error extraction
+
+**src/corrector.py** — Feeds errors back to LLM:
+- Uses `prompts/v1_correct.txt` template
+- Includes: Verilog source, spec, failed testbench code, error messages
+- Same cocotb 2.0 auto-fixes as generator
+
+**src/agent.py** — Two-tier orchestrator (CorrectBench algorithm):
+- IC_MAX=3 corrections before reboot, IR_MAX=10 reboots before giving up
+- Records full history with failure analysis for every iteration
+- Outputs JSON run log with all metrics
+
+**src/analyzer.py** — Failure taxonomy (9 categories):
+- SYNTAX, COCOTB_API, SIGNAL_ACCESS, TIMING, LOGIC, COMPILE, IMPORT, TIMEOUT, UNKNOWN
+- Each failure tagged with whether the corrector can likely fix it
+
+### Critical cocotb 2.0 Discovery
+LLMs generate cocotb 1.x API code that FAILS. The generator auto-fixes these patterns:
+1. `units="ns"` → `unit="ns"` (MOST COMMON — LLMs always get this wrong even with rules in prompt)
+2. `.value.integer` → `int(.value)`
+3. `cocotb.fork()` → `cocotb.start_soon()`
+4. `.kill()` → `.cancel()`
+5. `raise TestFailure()` → `assert False`
+6. `from cocotb.result import TestFailure` → removed
+7. `from cocotb.binary import BinaryValue` → removed
+8. `.value.binstr` → `str(.value)`
+
+Also: signal named `in` (Python keyword) must use `getattr(dut, "in").value` — added as rule #11 in prompts.
 
 ---
 
-## GOLDEN TEST SUITE — DESIGNS TO USE
+## COMPETITIVE LANDSCAPE (March 2026)
 
-### Tier 1: Basic (build agent with these first)
-| # | Design | Complexity | Status |
-|---|---|---|---|
-| 1 | 4-bit adder | Trivial (combinational) | cocotb test verified ✓ |
-| 2 | 8-bit ALU | Easy (5 operations + zero flag) | Claude-generated test verified ✓ |
-| 3 | 4-bit counter | Easy (sequential + clock) | Need to create |
-| 4 | 8-bit shift register | Easy (sequential) | Need to create |
-
-### Tier 2: Medium (prove agent handles real designs)
-| # | Design | Source |
+### What Exists
+| Tool | Best Result | Gap |
 |---|---|---|
-| 5 | FIFO buffer | Open source |
-| 6 | UART transmitter | Open source |
-| 7 | SPI master | Open source |
+| AutoBench | 52% pass | No self-correction |
+| CorrectBench | 70% pass | Only simple designs, unexplained 28% failure |
+| ConfiBench | 72% pass | Still fails sequential |
+| MAGE | 95.7% syntax | RTL generation only, not verification |
+| UVM² | 87% coverage | Struggles timing/protocols |
+| Cadence ChipStack | Commercial | Closed, $$$, announced Feb 2026 |
+| Siemens Questa One | Commercial | Closed, $$$, announced GTC 2026 |
+| ChipAgents | Startup ($74M) | Closed, multi-agent root cause analysis |
 
-### Tier 3: Power-Aware (the AMD differentiator)
-| # | Design | Source |
+### What Nobody Can Do (Our Gap)
+1. **Power-aware verification = ZERO AI tools exist** — Project Ava is FIRST
+2. **Failure categorization** — CorrectBench doesn't explain why it fails, we do
+3. **Open-source agent** — All commercial tools are closed/expensive
+4. **cocotb 2.0 auto-fixes** — No other tool handles the API migration
+
+### RealBench Reality Check
+Best LLM (o1-preview): 13.3% pass on real IP modules, **0% on system-level**. We're at 100% on our golden suite but it's smaller/simpler designs.
+
+### Full research details saved in:
+- `/Users/hale/.claude/projects/-Users-hale/memory/project-ava-research.md`
+- `/Users/hale/.claude/projects/-Users-hale/memory/project-ava-acm-amd.md`
+
+---
+
+## ACM MEETING & AMD PANEL CONTEXT
+
+### Key People at AMD (from ACM panel March 4, 2026)
+| Name | Role | Relevance |
 |---|---|---|
-| 8 | Clock gating cell (ICG) | github.com/drvasanthi/iiitb_cg |
-| 9 | Frequency divider | github.com/D3r3k23/clk_divider |
-| 10 | Power state machine | Write ourselves |
-| 11 | DVFS controller | Write ourselves (no open source exists — this is the research gap) |
+| **Rex McCurry** | Site Lead, GPU Architect | Coordinates AMD-UCF. Wants "IP pipeline" (research). |
+| **Derek Martin** | Hardware Architect | **"I work on features that turn stuff off to save power."** Direct DVFS customer. |
+| **John G** | GPU Power Modeling | Recent UCF grad. Could validate power-aware tests. |
+| **Michelle** | Verification (since 2008) | GPU verification → performance verification. |
+
+### AMD's 4 Pillars at UCF
+1. Talent pipeline (hiring)
+2. Curriculum improvement
+3. **IP pipeline (research)** ← Project Ava IS this
+4. AI adoption ("AMD believes AI is a huge game changer")
+
+### Key Quotes
+- Rex: "Verification is 70-80% of VLSI cycle. If we don't get it right, costs us a lot of money."
+- Rex: "We also want an IP pipeline. So that's the research."
+- Industry standard: 1 designer : 3 verification engineers
+
+### ACM Team Structure
+- 4 teams × 4 people = 16 total
+- Teams: Agents, Automation, FPGA Development, Research
+- Dylan limited scope to functional verification "because it's our first time" — power-aware is the Phase 2 that impresses AMD
 
 ---
 
-## WHAT HAS BEEN DONE (March 18, 2026)
+## WHAT TO BUILD NEXT (Priority Order)
 
-### Completed
-- [x] Full research on existing tools: AutoBench, CorrectBench, ConfiBench, VerilogCoder, UVM², UVLLM
-- [x] Full research on cocotb 2.0 breaking changes (24 changes documented)
-- [x] Installed all tools: Icarus Verilog, Verilator, Ollama, cocotb
-- [x] Created Python 3.13 venv (cocotb requires ≤3.13, system has 3.14)
-- [x] Pulled DeepSeek-Coder 6.7B model in Ollama
-- [x] Created GitHub repo: github.com/vanthienha199/project-ava
-- [x] Tested end-to-end: claude -p → cocotb testbench → icarus simulation → PASS
-- [x] Discovered and documented the critical cocotb 2.0 API trap
-- [x] Identified golden test suite designs (4 tiers, 11 designs)
-- [x] Documented CorrectBench algorithm (two-tier iteration: correct vs reboot)
-- [x] Documented UVM² architecture (3-agent pipeline)
-- [x] Confirmed `claude -p` works as free LLM via Max plan
-- [x] Confirmed Ollama API works for local LLM calls
-- [x] Saved all research in RESEARCH_FINDINGS.md
+### Immediate (High Impact)
+- [ ] **Alienware SSH setup** — Connect Mac → Alienware via SSH, install Ollama + DeepSeek-Coder-33B. This enables free local 33B model for benchmark comparison.
+- [ ] **Ollama benchmark** — Run all 7 designs with DeepSeek-Coder 6.7B (Mac) and 33B (Alienware). Compare pass rates to Claude. Paper result: "open-source LLM vs Claude on power-aware verification."
+- [ ] **Domain + demo page** — Buy projectava.dev or similar ($12). Deploy demo page (Netlify, free) showing benchmark results, architecture diagram, live demo video.
+- [ ] **Analyzer module** — Auto-generate spec from Verilog DUT (parse ports, operations, clock/reset). Currently specs are written by hand.
 
-### NOT Done Yet (Next Chat Should Do These)
-- [ ] **Create project structure** (src/, prompts/, golden/, runs/)
-- [ ] **Build LLM wrapper** (llm.py — abstract claude -p vs ollama)
-- [ ] **Build simulator module** (simulator.py — run make SIM=icarus, parse output)
-- [ ] **Build generator module** (generator.py — prompt template + LLM call)
-- [ ] **Build corrector module** (corrector.py — error feedback loop)
-- [ ] **Build analyzer module** (analyzer.py — parse Verilog DUT)
-- [ ] **Build main agent orchestrator** (agent.py — the full pipeline)
-- [ ] **Create prompt templates** (v1_analyze.txt, v1_generate.txt, v1_correct.txt)
-- [ ] **Create golden test suite** (Verilog designs for tiers 1-3)
-- [ ] **Build logging system** (auto-save every run to runs/)
-- [ ] **Build evaluation script** (run agent on all golden designs, report results)
-- [ ] **Create CLAUDE.md** for the project
-- [ ] **First commit + push to GitHub**
-- [ ] **Set up Alienware for SSH + Ollama with DeepSeek-Coder-33B**
+### Medium Term
+- [ ] **More golden designs** — FIFO, UART, SPI (Tier 2 from original plan). Shift register.
+- [ ] **Anthropic API integration** — Use API instead of `claude -p` for structured outputs, temperature control, token counting. Needs ANTHROPIC_API_KEY (~$20).
+- [ ] **Run database / learning** — Store all runs, analyze patterns, improve prompts based on what fails. This is the "persistent expertise building" that Siemens claims but hasn't shipped.
+
+### Research / Paper
+- [ ] **Write up results** — Benchmark table, comparison to CorrectBench (72% vs our 100%), failure taxonomy, power-aware gap analysis
+- [ ] **Present to Dr. Wu** — Working demo + research narrative
+- [ ] **Present to AMD panel** — Live demo on unseen design
+
+### Stretch
+- [ ] **UPF integration** — Parse UPF files for power domain info. Requires commercial simulator for full UPF, but can extract info with Python parser and generate assertions.
+- [ ] **Cross-domain verification** — Clock × power × reset domain interactions
 
 ---
 
-## CONTEXT: HA LE'S FULL SITUATION
+## IMPORTANT FINDINGS FROM THIS SESSION
 
-### Dr. Wu's Lab (Unary Lab, UCF)
-- **Primary task:** Run lit_silicon on AMD MI300X GPUs (waiting for access)
-- **Spring break task:** Research agentic AI systems — Project Ava IS this research
-- **Weekly meetings:** Wednesdays 2 PM, HEC356 (in-person) or Zoom
-- **Connection:** Dr. Wu's Lit Silicon paper = thermal imbalance → DVFS throttling. Derek Martin at AMD = DVFS verification. Project Ava = agentic verification for DVFS. One project, three audiences.
+### Proof of Concept Validated
+1. **cocotb CAN verify power-aware designs with Icarus Verilog** — Proved with ICG clock gating cell (5/5 hand-written, 5/5 LLM-generated)
+2. **Internal wires (cgclk, q_l, en) are visible via VPI** — No limitation
+3. **LLM generates correct power-aware verification logic** — Only API syntax needs fixing
+4. **Self-correction loop works** — ALU, freq_divider, power_fsm, dvfs_controller all needed corrections and recovered to 100%
 
-### ACM Project Ava
-- **PM:** Dylan (proposed project, AMD funded via Rex McCurry)
-- **Ha Le's role:** Agent + Automation teams
-- **Team size:** 16 people total, 4 teams
-- **Semester goal:** One working verification agent
-- **Spring break:** Agent team watching YouTube + reading GitHub on agents. Ha Le went deeper (read papers, set up tools, tested pipeline).
-- **After break:** In-person meeting, hit the ground running
+### Critical Limitations Identified
+1. **Icarus Verilog has ZERO UPF support** — No power domains, isolation cells, retention. UPF verification needs commercial tools. BUT clock gating, freq dividers, power FSMs, DVFS controllers are all plain Verilog and work fine.
+2. **LLMs ALWAYS use `units="ns"` instead of `unit="ns"`** — Even with the rule in the prompt. The auto-fix in generator.py catches this.
+3. **Markdown fences** — LLMs wrap code in ```python```. The clean_code() method strips these.
+4. **Python keyword `in`** — Signal named "in" requires `getattr(dut, "in")`. Rule #11 in prompts.
+5. **Multi-LLM consensus** — No evidence this works for testbench generation. Dropped until proven.
+6. **Lit Silicon connection is motivational, not technical** — Can't directly convert thermal traces to test vectors. The story is: "Lit Silicon proves DVFS bugs matter → Project Ava catches them at design time."
 
-### Other Commitments
-- Senior Design 2 (SafeFall) — Expo March 29, almost done
-- Vooks (work) — Data investigation ongoing
-- Only 3 credits this semester
+### CorrectBench Failure Analysis (Why 28% Fail)
+- Sequential circuits: 54.93% pass vs combinational 84.20%
+- LLMs fail at: clock cycle timing, signal collection at right time points, driver formatting
+- Validator only 88.85% accurate — 11% of validations are wrong
+- ConfiBench improved sequential by 21 points but still doesn't explain root causes
+- **Our advantage:** failure taxonomy categorizes every error, enabling targeted improvement
 
-### Budget
-- Ha Le offered $100 for the project
-- Likely needs $0-25 (Claude Max covers LLM, tools are free)
-- DeepSeek API: $10-20 backup if needed (5M free tokens on signup)
+---
+
+## BUDGET
+| Item | Cost | Status |
+|---|---|---|
+| Anthropic API credits | ~$20 | Not yet purchased |
+| DeepSeek API | $0 | Free 5M tokens on signup |
+| Domain (projectava.dev) | ~$12/yr | Not yet purchased |
+| Hosting (Netlify) | $0 | Free tier |
+| Alienware + Ollama | $0 | Free (from lab), needs SSH setup |
+| **Total spent so far** | **$0** | Everything uses claude -p (Max plan) + free tools |
 
 ---
 
 ## GIT AUTHOR RULES (CRITICAL)
-
 - **ALWAYS:** `--author="Ha Le <halevanthien@gmail.com>"`
 - **NEVER** add Co-Authored-By Claude
 - **NEVER** mention Claude in any commit
@@ -284,28 +336,29 @@ project-ava/
 
 ---
 
-## HOW TO START BUILDING (Instructions for Next Chat)
-
-1. Read this file 100%
-2. Read `/Users/hale/projects/project-ava/research/RESEARCH_FINDINGS.md` 100%
-3. Activate venv: `source /Users/hale/projects/project-ava/venv/bin/activate`
-4. Start with the project structure + LLM wrapper + simulator module
-5. Then build generator with prompt templates (MUST include cocotb 2.0 rules)
-6. Then build corrector (two-tier: correct vs reboot)
-7. Then build orchestrator
-8. Test on golden suite tier 1 (adder, ALU, counter, shift register)
-9. Expand to tier 2 and 3
-10. Every step: log everything, version prompts, test against golden suite
-
----
-
 ## KEY FILES TO READ
 
 | File | What It Contains |
 |---|---|
-| This file (PROGRESS.md) | Full project context, what's done, what to build next |
-| research/RESEARCH_FINDINGS.md | cocotb 2.0 API traps, CorrectBench algorithm, UVM² architecture, golden suite designs, prompt rules |
-| research/claude_gen_test/alu.v | Working 8-bit ALU design (reference DUT) |
-| research/claude_gen_test/test_alu.py | Working Claude-generated cocotb testbench (FIXED for 2.0) |
-| research/cocotb_test/test_adder.py | Simple working cocotb test (reference pattern) |
-| /Users/hale/Desktop/Research/PROGRESS_LITSIL_CHOPPER.md | Dr. Wu's lab context (lit_silicon, chopper, AMD access) |
+| This file (PROGRESS.md) | Full project context, what's built, what to build next |
+| research/RESEARCH_FINDINGS.md | cocotb 2.0 API traps, CorrectBench algorithm, UVM² architecture, prompt rules |
+| src/agent.py | Main orchestrator — the pipeline loop |
+| src/llm.py | LLM wrapper (3 backends) |
+| src/generator.py | Prompt building + cocotb 2.0 auto-fixes |
+| src/simulator.py | Icarus Verilog runner + result parsing |
+| src/analyzer.py | Failure taxonomy (9 categories) |
+| prompts/v1_generate.txt | Generation prompt template |
+| prompts/v1_correct.txt | Correction prompt template |
+| golden/07_dvfs_controller/ | The breakthrough design (DVFS controller) |
+| CLAUDE.md | Claude Code instructions for this project |
+| /Users/hale/.claude/projects/-Users-hale/memory/project-ava-research.md | Competitive landscape + gaps |
+| /Users/hale/.claude/projects/-Users-hale/memory/project-ava-acm-amd.md | ACM meeting + AMD panel context |
+
+---
+
+## BEHAVIORAL NOTES FOR NEXT CHAT
+- **Never use inline Python in shell commands** — always write to a file, then tell user to run `python3 filename.py`
+- **Never ask "what do you want next"** — proceed with what's most optimal
+- **The user wants a breakthrough product** — not just a school project. Think commercially.
+- **cocotb 2.0 rules MUST be in every LLM prompt** — see prompts/v1_generate.txt
+- **Signal `in` needs getattr()** — this bit us once, auto-fix rule #11
