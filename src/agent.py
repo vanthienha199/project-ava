@@ -30,6 +30,7 @@ from .llm import LLM
 from .generator import Generator, GenResult
 from .corrector import Corrector
 from .simulator import Simulator, SimResult
+from .analyzer import analyze_failure, FailureAnalysis
 
 
 IC_MAX = 3   # Max correction attempts before reboot
@@ -43,6 +44,7 @@ class Iteration:
     ir: int  # reboot counter
     gen_result: GenResult = None
     sim_result: SimResult = None
+    failures: list = field(default_factory=list)  # list of FailureAnalysis
 
 
 @dataclass
@@ -89,6 +91,10 @@ class AgentResult:
                 "fail_count": it.sim_result.fail_count if it.sim_result else None,
                 "llm_latency_ms": it.gen_result.llm_response.latency_ms if it.gen_result else None,
                 "sim_latency_ms": it.sim_result.latency_ms if it.sim_result else None,
+                "failures": [
+                    {"category": f.category.value, "summary": f.summary, "fixable": f.fixable_by_corrector}
+                    for f in it.failures
+                ] if it.failures else [],
             }
             for it in self.history
         ]
@@ -147,6 +153,11 @@ class Agent:
                 test_file_content=current_code,
             )
 
+            # Analyze failures if any
+            failures = []
+            if not sim_result.passed:
+                failures = analyze_failure(sim_result.raw_output, sim_result.errors)
+
             # Record iteration
             iter_type = "generate" if ic == 0 and len(history) == ir else "correct"
             iteration = Iteration(
@@ -155,6 +166,7 @@ class Agent:
                 ir=ir,
                 gen_result=gen_result,
                 sim_result=sim_result,
+                failures=failures,
             )
             history.append(iteration)
 
