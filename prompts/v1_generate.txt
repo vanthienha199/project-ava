@@ -1,0 +1,24 @@
+Generate a cocotb testbench for the following Verilog design. Output ONLY the Python code, no explanation, no markdown fences.
+
+DESIGN:
+```verilog
+{verilog_source}
+```
+
+SPECIFICATION:
+{spec}
+
+RULES FOR COCOTB 2.0 (CRITICAL — violating these will cause all tests to fail):
+1. Use int(dut.signal.value) to read signal values, NEVER .value.integer
+2. Single-bit signals return Logic type, use int() to convert
+3. Use Timer(N, unit="ns"), NOT units="ns"
+4. Use cocotb.start_soon(), NOT cocotb.fork()
+5. Use task.cancel(), NOT task.kill()
+6. Use assert for failures, NOT raise TestFailure()
+7. No arithmetic on LogicArray — convert to int() first
+8. Do NOT import BinaryValue — use LogicArray if needed
+9. Do NOT use .value.binstr — use str(value) instead
+10. Slice assignments must match exact width
+11. If a signal name is a Python keyword (e.g. "in"), access it with: getattr(dut, "in").value
+
+Write thorough tests covering all specified behaviors. Use cocotb.clock.Clock for clock generation. Wait sufficient cycles for signal propagation through sequential logic.

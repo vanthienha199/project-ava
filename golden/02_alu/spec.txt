@@ -1,0 +1,20 @@
+8-bit ALU with 5 operations and zero flag.
+Inputs: a[7:0], b[7:0], op[2:0]. Outputs: result[7:0], zero (1-bit).
+
+Operations:
+- op=000: result = a + b
+- op=001: result = a - b
+- op=010: result = a & b (AND)
+- op=011: result = a | b (OR)
+- op=100: result = a ^ b (XOR)
+- op=101/110/111: result = 0 (default)
+
+Zero flag: zero=1 when result==0, zero=0 otherwise.
+All operations are 8-bit (overflow wraps).
+
+Verify:
+1. Each operation with basic values
+2. Overflow/underflow behavior for add and sub
+3. Edge cases (0, 255, complementary values for AND/OR/XOR)
+4. Zero flag correctness for each operation
+5. Default operations (op=101,110,111) return 0

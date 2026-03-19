@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+
+# cocotb simulation artifacts
+sim_build/
+results.xml
+*.vcd
+
+# Run logs (generated, not committed)
+runs/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

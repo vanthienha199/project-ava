@@ -1,0 +1,9 @@
+4-bit adder. Inputs: a[3:0], b[3:0]. Output: sum[4:0] (5 bits to handle carry).
+Combinational logic: sum = a + b.
+
+Verify:
+1. Basic addition (e.g. 3+5=8)
+2. Zero cases (0+0=0)
+3. Max values (15+15=30)
+4. Carry behavior (result uses 5th bit)
+5. Random test with at least 20 random input pairs

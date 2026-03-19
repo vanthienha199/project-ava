@@ -1,0 +1,32 @@
+The following cocotb testbench failed simulation. Fix it and output ONLY the corrected Python code, no explanation, no markdown fences.
+
+VERILOG DESIGN:
+```verilog
+{verilog_source}
+```
+
+SPECIFICATION:
+{spec}
+
+FAILED TESTBENCH:
+```python
+{testbench_code}
+```
+
+ERRORS:
+{error_messages}
+
+RULES FOR COCOTB 2.0 (CRITICAL — violating these will cause all tests to fail):
+1. Use int(dut.signal.value) to read signal values, NEVER .value.integer
+2. Single-bit signals return Logic type, use int() to convert
+3. Use Timer(N, unit="ns"), NOT units="ns"
+4. Use cocotb.start_soon(), NOT cocotb.fork()
+5. Use task.cancel(), NOT task.kill()
+6. Use assert for failures, NOT raise TestFailure()
+7. No arithmetic on LogicArray — convert to int() first
+8. Do NOT import BinaryValue — use LogicArray if needed
+9. Do NOT use .value.binstr — use str(value) instead
+10. Slice assignments must match exact width
+11. If a signal name is a Python keyword (e.g. "in"), access it with: getattr(dut, "in").value
+
+Analyze the errors carefully. Fix ONLY what is broken. Preserve all correct test logic.

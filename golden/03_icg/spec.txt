@@ -1,0 +1,14 @@
+Integrated Clock Gating (ICG) cell with downstream flip-flops.
+
+The "in" signal controls gating:
+- When in=0: the gated clock (cgclk) toggles normally, and d0/d1 are sampled into q0/q1 on posedge cgclk
+- When in=1: the gated clock stops (stays low), q0/q1 hold their previous values
+- The enable path uses a DFF (posedge clk) and a latch (negedge clk) for glitch-free operation
+- "in" is registered through a DFF before being used as enable
+
+Verify:
+1. Clock gating activates (cgclk toggles when in=0)
+2. Clock gating disables (cgclk stays low when in=1)
+3. Data is sampled when clock is active
+4. Data holds (not sampled) when clock is gated
+5. Data integrity across gate/ungate transitions

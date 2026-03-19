@@ -1,0 +1,19 @@
+Frequency divider with divide-by-2, divide-by-4, and divide-by-8 outputs.
+This is a power-management component used in DVFS systems to generate lower clock frequencies.
+
+Inputs: clk (main clock), rst (active-high async reset).
+Outputs: clk_div2 (half frequency), clk_div4 (quarter frequency), clk_div8 (eighth frequency).
+
+Behavior:
+- On reset: all outputs go low, internal counter resets to 0
+- clk_div2 toggles every 2 clk cycles
+- clk_div4 toggles every 4 clk cycles
+- clk_div8 toggles every 8 clk cycles
+
+Verify:
+1. Reset clears all outputs
+2. clk_div2 period is 2x the input clock period
+3. clk_div4 period is 4x the input clock period
+4. clk_div8 period is 8x the input clock period
+5. All outputs maintain correct phase relationship after reset release
+6. Reset during operation correctly restarts all dividers

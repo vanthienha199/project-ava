@@ -1,0 +1,16 @@
+4-bit synchronous counter with enable and async reset.
+Inputs: clk, rst (active-high async reset), enable (active-high).
+Output: count[3:0].
+
+Behavior:
+- On posedge rst: count resets to 0 regardless of clock
+- On posedge clk with enable=1: count increments by 1
+- On posedge clk with enable=0: count holds
+- Wraps from 15 to 0
+
+Verify:
+1. Reset sets count to 0
+2. Count increments when enabled
+3. Count holds when not enabled
+4. Wrap-around from 15 to 0
+5. Reset overrides enable (reset while counting)

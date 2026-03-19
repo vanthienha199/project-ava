@@ -1,0 +1,4 @@
+{
+    "toplevel": "iiitb_icg",
+    "files": ["dff.v", "iiitb_icg.v"]
+}
