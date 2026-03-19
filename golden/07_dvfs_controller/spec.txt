@@ -1,0 +1,38 @@
+DVFS (Dynamic Voltage and Frequency Scaling) controller.
+This is the core power management hardware in GPUs and SoCs that adjusts voltage
+and frequency based on workload demand, temperature, and power budget.
+
+Inputs:
+- clk: system clock
+- rst: active-high async reset
+- workload[7:0]: current workload intensity (0=idle, 255=max load)
+- temperature[7:0]: current die temperature reading (0=cold, 255=hot)
+- temp_threshold[7:0]: temperature above which thermal throttling activates
+- power_budget[7:0]: maximum allowed power consumption
+
+Outputs:
+- freq_sel[2:0]: frequency level (0=lowest, 7=highest)
+- voltage_sel[2:0]: voltage level (0=lowest, 7=highest)
+- throttled: 1 when thermal throttling is active
+- power_est[7:0]: estimated power consumption (level*level, simplified V*f model)
+
+Behavior:
+- Workload maps to target DVFS level: 0-31→level 0, 32-63→level 1, ..., 224-255→level 7
+- freq_sel and voltage_sel always equal current_level (coupled scaling)
+- Ramps up/down one level per clock cycle (safe voltage transitions, no jumping)
+- Thermal throttling: when temperature >= temp_threshold, throttled=1 and level ramps down to max level 2
+- Power budget: will not ramp up if (next_level)^2 > power_budget
+- power_est = current_level * current_level (simplified power model)
+- Reset sets everything to 0
+
+Verify:
+1. Reset initializes all outputs to 0
+2. Workload-to-level mapping is correct for each range
+3. Ramps up one level per cycle (not instant jump)
+4. Ramps down one level per cycle
+5. Thermal throttling activates when temperature >= threshold
+6. Thermal throttling clamps level to max 2
+7. Power budget prevents ramp-up when (level+1)^2 > budget
+8. freq_sel and voltage_sel always match
+9. power_est = level * level
+10. Thermal throttle overrides workload demand

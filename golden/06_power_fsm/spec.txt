@@ -1,0 +1,37 @@
+Power management state machine with 4 states and thermal throttling.
+This models the power controller in a GPU/SoC that manages voltage and clock gating.
+
+Inputs:
+- clk: system clock
+- rst: active-high async reset
+- request[1:0]: power mode request (00=idle, 01=low_power, 10=active, 11=boost)
+- thermal_warning: high temperature alert (1=throttle required)
+
+Outputs:
+- state[1:0]: current power state (00=IDLE, 01=LOW_POWER, 10=ACTIVE, 11=BOOST)
+- clk_enable: clock gating control (0=clock gated, 1=clock active)
+- voltage_sel[1:0]: voltage level (00=off, 01=low, 10=nominal, 11=high)
+- boost_active: 1 when in BOOST state
+
+State transition rules:
+- IDLE: clk_enable=0, voltage=00. Transitions to ACTIVE on request=10, LOW_POWER on request=01. Boost request goes through ACTIVE first.
+- LOW_POWER: clk_enable=1, voltage=01. Can go to ACTIVE or IDLE.
+- ACTIVE: clk_enable=1, voltage=10. Can go to BOOST (only if no thermal_warning), LOW_POWER, or IDLE. Thermal warning forces transition to LOW_POWER.
+- BOOST: clk_enable=1, voltage=11, boost_active=1. Thermal warning forces exit to ACTIVE. Any non-boost request drops to ACTIVE.
+
+Critical safety rules:
+- Cannot enter BOOST directly from IDLE (must go through ACTIVE)
+- Thermal warning always forces exit from BOOST
+- Thermal warning in ACTIVE forces throttle to LOW_POWER
+- Reset always returns to IDLE with everything off
+
+Verify:
+1. Reset initializes to IDLE state with correct outputs
+2. All valid state transitions work (IDLE→ACTIVE, ACTIVE→BOOST, etc.)
+3. Cannot jump directly from IDLE to BOOST
+4. Thermal warning forces BOOST→ACTIVE
+5. Thermal warning forces ACTIVE→LOW_POWER (thermal throttling)
+6. Clock gating: clk_enable=0 only in IDLE
+7. Voltage levels match each state
+8. boost_active=1 only in BOOST state
+9. Reset from any state returns to IDLE
