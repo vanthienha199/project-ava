@@ -1,0 +1,33 @@
+# flyctl launch added from .gitignore
+# Python
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/venv
+
+# cocotb simulation artifacts
+**/sim_build
+**/results.xml
+**/*.vcd
+
+# Run logs (generated, not committed)
+**/runs
+
+# OS
+**/.DS_Store
+
+# IDE
+**/.vscode
+**/.idea
+
+# Cloned external repos
+**/research/iiitb_cg
+
+# flyctl launch added from venv/.gitignore
+# Created by venv; see https://docs.python.org/3/library/venv.html
+venv/**/*
+
+# flyctl launch added from venv/lib/python3.13/site-packages/cocotb/share/def/.gitignore
+# Generated import libraries on Windows
+venv/lib/python3.13/site-packages/cocotb/share/def/**/*.a
+fly.toml
