@@ -333,23 +333,24 @@
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'runs' }, (payload) => {
                     const run = payload.new;
                     addTerminalLine(`[${formatTime(new Date())}] New run detected: ${run.design_name}`, 'line-warn');
-                    if (!run.passed && run.iterations === 0) {
-                        setActiveState(run);
-                    } else {
-                        setCompletedState(run);
-                    }
+                    // Always show active state on INSERT — reporter inserts with passed=false first
+                    setActiveState(run);
                 })
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'runs' }, (payload) => {
                     const run = payload.new;
+                    // Track any run we see, not just the one we explicitly started
+                    if (!activeRunId) activeRunId = run.id;
                     if (run.id === activeRunId) {
                         const current = run.iterations || 1;
                         const pct = Math.min((current / 10) * 100, 100);
                         document.getElementById('progress-bar').style.width = pct + '%';
                         document.getElementById('progress-label').textContent = `Iteration ${current}`;
-                        addTerminalLine(`[${formatTime(new Date())}] Iteration ${current} — Pass: ${run.pass_count || 0} Fail: ${run.fail_count || 0}`, 'line-info');
 
-                        if (run.passed !== null && run.passed !== undefined) {
+                        if (run.passed === true) {
+                            addTerminalLine(`[${formatTime(new Date())}] Iteration ${current} — PASS ${run.pass_count || 0}/${run.total_tests || 0} tests`, 'line-pass');
                             setCompletedState(run);
+                        } else {
+                            addTerminalLine(`[${formatTime(new Date())}] Iteration ${current} — Pass: ${run.pass_count || 0} Fail: ${run.fail_count || 0}`, 'line-info');
                         }
                     }
                 })
@@ -371,8 +372,10 @@
             sb.channel('tests-changes')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'test_results' }, (payload) => {
                     const test = payload.new;
-                    if (test.run_id === activeRunId) {
+                    // Show test results for current active run
+                    if (activeRunId && test.run_id === activeRunId) {
                         addLiveTestResult(test);
+                        document.getElementById('live-tests-section').style.display = 'block';
                     }
                 })
                 .subscribe();

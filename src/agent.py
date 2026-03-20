@@ -31,6 +31,7 @@ from .generator import Generator, GenResult
 from .corrector import Corrector
 from .simulator import Simulator, SimResult
 from .analyzer import analyze_failure, FailureAnalysis
+from .reporter import LiveReporter
 
 
 IC_MAX = 3   # Max correction attempts before reboot
@@ -102,10 +103,11 @@ class AgentResult:
 
 
 class Agent:
-    def __init__(self, llm: LLM, prompt_version="v1"):
+    def __init__(self, llm: LLM, prompt_version="v1", live_report=True):
         self.generator = Generator(llm, prompt_version)
         self.corrector = Corrector(llm, prompt_version)
         self.simulator = Simulator()
+        self.reporter = LiveReporter(enabled=live_report)
 
     def run(self, design_dir: str, verilog_files: list, toplevel: str,
             spec: str, test_module: str = "test_generated") -> AgentResult:
@@ -129,6 +131,10 @@ class Agent:
         verilog_source = ""
         for vf in verilog_files:
             verilog_source += (design_dir / vf).read_text() + "\n"
+
+        # Derive design name from directory for live reporting
+        design_name = Path(design_dir).name
+        live_run_id = self.reporter.start_run(design_name, backend=getattr(self.generator.llm, 'backend', 'unknown'))
 
         history = []
         ic = 0  # correction counter
@@ -170,14 +176,35 @@ class Agent:
             )
             history.append(iteration)
 
+            # Report iteration to live dashboard
+            self.reporter.update_iteration(
+                live_run_id, len(history), iter_type,
+                passed=sim_result.passed,
+                pass_count=sim_result.pass_count,
+                fail_count=sim_result.fail_count,
+                corrections=sum(1 for h in history if h.iteration_type == "correct"),
+                reboots=ir,
+            )
+
             # Check if passed
             if sim_result.passed:
                 total_ms = (time.monotonic() - start) * 1000
+                corrections_count = sum(1 for h in history if h.iteration_type == "correct")
+                self.reporter.complete_run(
+                    live_run_id, passed=True,
+                    total_tests=sim_result.total, pass_count=sim_result.pass_count,
+                    fail_count=sim_result.fail_count, iterations=len(history),
+                    corrections=corrections_count, reboots=ir,
+                    total_latency_ms=total_ms, tokens_in=total_tokens_in,
+                    tokens_out=total_tokens_out, testbench_code=current_code,
+                )
+                for t in sim_result.tests:
+                    self.reporter.report_test_result(live_run_id, t.name, t.status, t.sim_time_ns)
                 return AgentResult(
                     passed=True,
                     testbench_code=current_code,
                     iterations=len(history),
-                    corrections=sum(1 for h in history if h.iteration_type == "correct"),
+                    corrections=corrections_count,
                     reboots=ir,
                     history=history,
                     total_latency_ms=total_ms,
@@ -224,11 +251,20 @@ class Agent:
             else:
                 # Max iterations reached — give up
                 total_ms = (time.monotonic() - start) * 1000
+                corrections_count = sum(1 for h in history if h.iteration_type == "correct")
+                self.reporter.complete_run(
+                    live_run_id, passed=False,
+                    total_tests=sim_result.total, pass_count=sim_result.pass_count,
+                    fail_count=sim_result.fail_count, iterations=len(history),
+                    corrections=corrections_count, reboots=ir,
+                    total_latency_ms=total_ms, tokens_in=total_tokens_in,
+                    tokens_out=total_tokens_out, testbench_code=current_code,
+                )
                 return AgentResult(
                     passed=False,
                     testbench_code=current_code,
                     iterations=len(history),
-                    corrections=sum(1 for h in history if h.iteration_type == "correct"),
+                    corrections=corrections_count,
                     reboots=ir,
                     history=history,
                     total_latency_ms=total_ms,

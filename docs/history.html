@@ -169,7 +169,7 @@
         // ── Supabase ──
         const SUPABASE_URL = 'https://yvpmoyzggbcfaldhsbkl.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2cG1veXpnZ2JjZmFsZGhzYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5Njg5OTMsImV4cCI6MjA4OTU0NDk5M30.qgpE7ayn57SMzeJVgp7mBu3VJ825gTTe8G6OmfTc1b0';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // ── Matrix Rain ──
         const canvas = document.getElementById('matrix');
@@ -271,7 +271,7 @@
 
         async function loadHistory() {
             try {
-                const { data: runs, error } = await supabase.from('runs').select('*').order('created_at', { ascending: false });
+                const { data: runs, error } = await sb.from('runs').select('*').order('created_at', { ascending: false });
                 if (error) console.warn('Supabase error:', error);
                 allRuns = runs || [];
 

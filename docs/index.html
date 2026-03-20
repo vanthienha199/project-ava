@@ -591,22 +591,22 @@
                 <h2>Agent Pipeline</h2>
                 <div class="pipeline-flow">
                     <div class="pipe-step">
-                        <div class="step-icon">&#128196;</div>
+                        <div class="step-icon">&gt;_</div>
                         <h3>Input</h3>
                         <p>Verilog DUT + natural language specification</p>
                     </div>
                     <div class="pipe-step">
-                        <div class="step-icon">&#129302;</div>
+                        <div class="step-icon">{&lowast;}</div>
                         <h3>Generate</h3>
                         <p>LLM creates cocotb testbench with 8 auto-fixes for cocotb 2.0</p>
                     </div>
                     <div class="pipe-step">
-                        <div class="step-icon">&#9881;</div>
+                        <div class="step-icon">&gt;&gt;</div>
                         <h3>Simulate</h3>
                         <p>Icarus Verilog compiles + runs, parses structured results</p>
                     </div>
                     <div class="pipe-step">
-                        <div class="step-icon">&#128260;</div>
+                        <div class="step-icon">&lt;&lt;</div>
                         <h3>Self-Correct</h3>
                         <p>9-category failure analysis, max 3 corrections + 10 reboots</p>
                     </div>
@@ -759,7 +759,7 @@
         // ── Supabase Client ──
         const SUPABASE_URL = 'https://yvpmoyzggbcfaldhsbkl.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2cG1veXpnZ2JjZmFsZGhzYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5Njg5OTMsImV4cCI6MjA4OTU0NDk5M30.qgpE7ayn57SMzeJVgp7mBu3VJ825gTTe8G6OmfTc1b0';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // ── Matrix Rain Effect ──
         const canvas = document.getElementById('matrix');
@@ -805,9 +805,9 @@
         async function loadDashboard() {
             try {
                 // Fetch designs
-                const { data: designs, error: dErr } = await supabase.from('designs').select('*');
+                const { data: designs, error: dErr } = await sb.from('designs').select('*');
                 // Fetch runs (latest per design)
-                const { data: runs, error: rErr } = await supabase.from('runs').select('*').order('created_at', { ascending: false });
+                const { data: runs, error: rErr } = await sb.from('runs').select('*').order('created_at', { ascending: false });
 
                 if (dErr || rErr) {
                     console.warn('Supabase query error:', dErr || rErr);

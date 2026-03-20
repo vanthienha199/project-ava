@@ -20,7 +20,7 @@ from .agent import Agent
 
 def run_single(args):
     """Run agent on a single design."""
-    llm = LLM(backend=args.backend, model=args.model)
+    llm = LLM(backend=args.backend, model=args.model, base_url=getattr(args, 'ollama_url', None))
     agent = Agent(llm, prompt_version=args.prompt_version)
 
     # Resolve design files
@@ -75,7 +75,7 @@ def run_benchmark(args):
         print("Error: golden/ directory not found", file=sys.stderr)
         sys.exit(1)
 
-    llm = LLM(backend=args.backend, model=args.model)
+    llm = LLM(backend=args.backend, model=args.model, base_url=getattr(args, 'ollama_url', None))
     agent = Agent(llm, prompt_version=args.prompt_version)
     os.makedirs("runs", exist_ok=True)
 
@@ -188,6 +188,7 @@ def main():
     run_parser.add_argument("--backend", default="claude_cli",
                             choices=["claude_cli", "anthropic_api", "ollama"])
     run_parser.add_argument("--model", default=None, help="LLM model override")
+    run_parser.add_argument("--ollama-url", default=None, help="Ollama API URL (e.g. http://localhost:11435)")
     run_parser.add_argument("--prompt-version", default="v1")
 
     # Benchmark
@@ -195,6 +196,7 @@ def main():
     bench_parser.add_argument("--backend", default="claude_cli",
                               choices=["claude_cli", "anthropic_api", "ollama"])
     bench_parser.add_argument("--model", default=None)
+    bench_parser.add_argument("--ollama-url", default=None, help="Ollama API URL")
     bench_parser.add_argument("--prompt-version", default="v1")
 
     args = parser.parse_args()
