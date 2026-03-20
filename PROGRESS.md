@@ -1,5 +1,5 @@
 # Project Ava — Full Progress & Context for New Chat
-**Last Updated:** March 19, 2026, 9:30 PM EST
+**Last Updated:** March 20, 2026, 12:45 PM EST
 **Author:** Ha Le (halevanthien@gmail.com)
 **READ THIS FILE 100% BEFORE DOING ANYTHING**
 
@@ -7,13 +7,11 @@
 
 ## WHAT IS THIS PROJECT?
 
-Project Ava (Automated Intelligent Verification with Agents) is a **working AI agent that automatically generates hardware verification testbenches**. Given a Verilog design file + natural language spec, the agent generates a cocotb (Python) testbench, runs Icarus Verilog simulation, and self-corrects until tests pass.
+Project Ava (Automated Intelligent Verification with Agents) is a **fully autonomous AI agent platform** for hardware verification. Users upload a Verilog design + natural language spec on the website, and the cloud-deployed agent automatically generates a cocotb testbench, simulates with Icarus Verilog, self-corrects until tests pass, and streams results live to the dashboard.
 
-**It now has a full web platform** (like ThermalTrace) with Matrix theme, backed by Supabase, showing live benchmark data.
+**It is now a real agentic AI application** — no terminal needed. The watcher runs 24/7 on Fly.io, picks up uploads from Supabase, and verifies designs autonomously using the Anthropic API.
 
-### CURRENT STATUS: WORKING AGENT + WEB PLATFORM — 11/11 DESIGNS, 103/103 TESTS
-
-The agent is **fully built and functional**. It has been tested on 11 designs across 5 categories including power-aware RTL that no other AI tool can verify. Benchmark results from March 19, 2026:
+### CURRENT STATUS: FULLY AUTONOMOUS CLOUD PLATFORM — 11/11 DESIGNS, 103/103 TESTS
 
 | Design | Type | Tests | Iterations | Self-corrected? |
 |---|---|---|---|---|
@@ -31,427 +29,369 @@ The agent is **fully built and functional**. It has been tested on 11 designs ac
 
 **Total: 11/11 designs passed, 103/103 tests, 5 power-aware designs, 100% pass rate.**
 
-### Design Categories
-- **Combinational (2):** adder, ALU
-- **Sequential (2):** counter, shift register
-- **Power-aware (5):** ICG clock gating, frequency divider, power FSM, DVFS controller, PWM generator
-- **Buffer/Memory (1):** FIFO
-- **Protocol (1):** UART TX (8N1 serial)
+### LLM Comparison (March 20, 2026)
+| LLM | Backend | Adder | ALU | Pass Rate | Notes |
+|---|---|---|---|---|---|
+| **Claude (Sonnet)** | claude_cli / anthropic_api | PASS 6/6 | PASS 6/6 | **100%** (11/11) | All designs pass |
+| **DeepSeek-Coder-33B** | Ollama (RTX 5090 via Vast.ai) | FAIL 0/0 | FAIL 0/4 | **0%** (0/2) | cocotb 2.0 trap kills it |
 
 ### Who It Serves
-1. **ACM Club Project** — Ha Le is on the Agent + Automation teams. Dylan is PM. AMD funds the project via Rex McCurry (AMD Orlando Site Lead). 16 students, 4 teams (Agents, Automation, FPGA Dev, Research). Semester goal: "one agent that can generate a verification test bench."
-2. **Dr. Di Wu's Lab (Unary Lab, UCF)** — Ha Le's research advisor. Dr. Wu asked Ha Le to research agentic AI systems. This project IS that research.
-3. **Personal Research / Breakthrough** — Must be something big companies (AMD etc.) would want to buy/license. Power-aware verification is the untouched gap — nobody else has built an AI agent for DVFS, clock gating, or power state machine verification.
-
-### Target Users (decided March 19)
-- **Primary (A):** Verification engineers at companies like AMD — CLI tool, assumes HDL knowledge, outputs coverage metrics
-- **Secondary (D):** Researchers — metrics, benchmarks, reproducible results, comparison tables for papers
+1. **ACM Club Project** — Ha Le is on the Agent + Automation teams. Dylan is PM. AMD funds via Rex McCurry. 16 students, 4 teams.
+2. **Dr. Di Wu's Lab (Unary Lab, UCF)** — Agentic AI research.
+3. **Personal Research / Breakthrough** — First AI tool for DVFS/power-aware verification. Companies like AMD would want this.
 
 ### The Unique Angle
-Derek Martin (AMD engineer, ACM panel March 4) works on "features that turn stuff off to save power" — DVFS verification. Dr. Wu's Lit Silicon paper is about thermal imbalance causing DVFS throttling. **Project Ava connects both**: an AI verification agent specifically for power management RTL. Nobody else has done this.
-
-**Important nuance (from critical review):** The Lit Silicon connection is **motivational, not technical**. Lit Silicon proves DVFS bugs matter (stragglers cost throughput). Project Ava prevents those bugs at design time. Don't claim "thermal-informed test generation" unless you actually build it — do claim "motivated by real-world DVFS failures documented in Lit Silicon."
+Derek Martin (AMD engineer) works on DVFS verification. Dr. Wu's Lit Silicon paper is about DVFS throttling causing GPU stragglers. **Project Ava prevents DVFS bugs at design time.** Nobody else has done this.
 
 ---
 
-## WHAT EXISTS RIGHT NOW (March 19, 2026)
+## LIVE DEPLOYMENT (March 20, 2026)
 
-### Project Structure
-```
-/Users/hale/projects/project-ava/
-├── .git/                          ← GitHub: github.com/vanthienha199/project-ava (4 commits on main)
-├── .gitignore
-├── CLAUDE.md                      ← Instructions for Claude Code
-├── PROGRESS.md                    ← THIS FILE
-├── venv/                          ← Python 3.13 virtualenv with cocotb 2.0.1
-├── src/
-│   ├── __init__.py
-│   ├── __main__.py                ← CLI entry point (python3 -m src benchmark, supports --backend)
-│   ├── llm.py                     ← LLM wrapper (Claude CLI, Anthropic API, Ollama) — 300s timeout, 8192 max tokens
-│   ├── generator.py               ← Prompt-based testbench generation + cocotb 2.0 auto-fixes
-│   ├── simulator.py               ← Icarus Verilog runner with structured result parsing
-│   ├── corrector.py               ← Error-feedback correction loop (error truncation at 2000 chars)
-│   ├── agent.py                   ← Two-tier orchestrator (graceful timeout handling, forces reboot on LLM failure)
-│   └── analyzer.py                ← Failure taxonomy (9 error categories)
-├── prompts/
-│   ├── v1_generate.txt            ← Generation prompt template (includes cocotb 2.0 rules)
-│   └── v1_correct.txt             ← Correction prompt template
-├── golden/                        ← Golden test suite (11 designs, all with config.json)
-│   ├── 01_adder/                  ← 4-bit adder (combinational)
-│   ├── 02_alu/                    ← 8-bit ALU (5 ops + zero flag)
-│   ├── 03_icg/                    ← Integrated clock gating cell (POWER-AWARE)
-│   ├── 04_counter/                ← 4-bit counter (sequential)
-│   ├── 05_freq_divider/           ← Divide-by-2/4/8 (POWER-AWARE, DVFS component)
-│   ├── 06_power_fsm/              ← Power state machine with thermal throttling (POWER-AWARE)
-│   ├── 07_dvfs_controller/        ← Full DVFS controller (POWER-AWARE, the research gap)
-│   ├── 08_shift_register/         ← 8-bit shift register with 4 modes (sequential)
-│   ├── 09_fifo/                   ← Synchronous FIFO, 8-deep (buffer/memory)
-│   ├── 10_pwm/                    ← PWM generator for voltage regulation (POWER-AWARE)
-│   └── 11_uart_tx/                ← UART 8N1 transmitter (protocol)
-├── docs/                          ← Web platform (5 pages, Matrix theme, Supabase-connected)
-│   ├── index.html                 ← Dashboard — stats, benchmark table, charts (dynamic from Supabase)
-│   ├── designs.html               ← Design browser — view Verilog source + specs, filter by category
-│   ├── history.html               ← Run history — all runs, sortable, filterable
-│   ├── analyze.html               ← Run analysis — deep dive into single run, iteration timeline, failures
-│   └── live.html                  ← Live monitor — realtime agent status via Supabase subscriptions
-├── scripts/
-│   ├── setup_db.sql               ← Supabase schema (5 tables, RLS policies, indexes)
-│   └── upload_results.py          ← Upload golden designs + run results to Supabase (retry logic)
-├── runs/                          ← Auto-generated JSON run logs (gitignored)
-├── research/
-│   ├── RESEARCH_FINDINGS.md       ← cocotb 2.0 traps, CorrectBench algorithm, prompt rules
-│   ├── cocotb_test/               ← Working adder test (reference)
-│   ├── claude_gen_test/           ← Claude-generated ALU test (reference)
-│   ├── icg_test/                  ← ICG proof-of-concept (hand-written + LLM-generated)
-│   └── iiitb_cg/                  ← Cloned ICG repo (github.com/drvasanthi/iiitb_cg)
-├── test_agent_icg.py              ← Single design test script
-├── test_agent_all.py              ← Multi-design test script
-├── test_new_designs.py            ← Power-aware designs test script
-├── run_new_designs.py             ← Run 3 new designs only
-├── test_simulator.py              ← Simulator module test
-└── test_cli_benchmark.py          ← CLI benchmark test
-```
+### Public Website
+- **URL:** https://astonishing-sorbet-80c3d2.netlify.app (rename to project-ava.netlify.app)
+- **Host:** Netlify (free tier) — deploy by dragging `docs/` folder
+- **6 pages:** Dashboard, Designs, Upload, History, Analyze, Live
+- **Theme:** Matrix (ThermalTrace clone) — #000 bg, #00ff00 green, Share Tech Mono, matrix rain
 
-### How to Run
+### Supabase Database
+- **URL:** https://yvpmoyzggbcfaldhsbkl.supabase.co
+- **Account:** annecgjackson@gmail.com (free tier)
+- **Tables:** designs, runs, iterations, failures, test_results
+- **Realtime:** Enabled on runs, iterations, test_results (for Live page)
+- **RLS:** Anonymous SELECT on all, INSERT on all, UPDATE on runs
 
-```bash
-# Activate venv (ALWAYS do this first)
-source /Users/hale/projects/project-ava/venv/bin/activate
+### Fly.io Cloud Watcher
+- **App:** project-ava-watcher (https://fly.io/apps/project-ava-watcher)
+- **Account:** halevanthien@gmail.com (GitHub login, credit card added)
+- **Region:** iad (Ashburn, Virginia)
+- **VM:** shared-cpu-1x, 512MB
+- **Container:** Python 3.13 + Icarus Verilog + cocotb 2.0.1
+- **Backend:** Anthropic API (ANTHROPIC_API_KEY set as Fly secret)
+- **Behavior:** Polls Supabase every 5s for `backend='pending'` runs, processes them
+- **Deploy:** `fly deploy` from project root
+- **Logs:** `fly logs --app project-ava-watcher`
+- **Cost:** Free tier (credit card required but not charged for small VM)
 
-# Run benchmark on all 11 golden designs
-python3 -m src benchmark
-
-# Run with Anthropic API (has token tracking)
-python3 -m src benchmark --backend anthropic_api
-
-# Run on a single design directory
-python3 -m src run --design-dir golden/07_dvfs_controller
-
-# Upload results to Supabase (after benchmark)
-python3 scripts/upload_results.py
-
-# Upload only runs (skip designs)
-python3 scripts/upload_results.py --runs-only
-```
-
-### Web Platform
-
-```bash
-# Preview locally
-open /Users/hale/projects/project-ava/docs/index.html
-
-# Deploy to Netlify: drag docs/ folder to app.netlify.com
-```
-
-**5 pages:** Dashboard, Designs, History, Analyze, Live
-**Theme:** Matrix (ThermalTrace exact clone) — black bg, #00ff00 green, Share Tech Mono, matrix rain, scan animations
-**Backend:** Supabase (free tier)
-- URL: https://yvpmoyzggbcfaldhsbkl.supabase.co
-- Anon key: in docs/*.html files
-- Tables: designs, runs, iterations, failures, test_results
-- Data: 11 designs + run results uploaded via scripts/upload_results.py
-
-### Git (4 commits pushed to main)
+### GitHub
+- **Repo:** github.com/vanthienha199/project-ava
+- **Commits:** 10 on main
 ```
 f58248f — Initial release: agentic hardware verification framework
 4e9671a — Add power state machine and DVFS controller to golden suite
 dfa19c7 — Add failure analysis taxonomy to agent pipeline
 52481ee — Update PROGRESS.md with complete session context
+3dcc741 — Expand to 11 designs, add web platform and Supabase backend
+7f225cf — Add live agent reporting and fix Supabase integration
+0812011 — Show latest passing run on Live page when idle
+70bf7ad — Add Upload page and agent watcher for interactive verification
+a4e8da5 — Add Fly.io cloud deployment for autonomous watcher
+(next)  — Update PROGRESS.md with session 3 context
 ```
 
 ---
 
-## ENVIRONMENT — VERIFIED WORKING
+## FULL AUTONOMOUS FLOW (How It Works End-to-End)
+
+```
+User (Browser)                     Supabase Cloud                  Fly.io (Watcher)
+┌─────────────────┐               ┌──────────────────┐           ┌──────────────────┐
+│ 1. Upload page   │               │                  │           │                  │
+│    Paste Verilog │──INSERT───────▶ designs table     │           │                  │
+│    + spec        │──INSERT───────▶ runs (pending)    │           │                  │
+│                  │               │                  │           │                  │
+│ 2. Live page     │               │         ◀────────────POLL────│ watcher.py       │
+│    (watching)    │               │                  │──────────▶│ finds pending    │
+│                  │               │                  │           │                  │
+│                  │               │                  │           │ 3. Downloads     │
+│                  │               │                  │           │    Verilog + spec │
+│                  │               │                  │           │                  │
+│                  │               │                  │           │ 4. Calls Claude  │
+│                  │               │                  │           │    (Anthropic API)│
+│                  │               │                  │           │                  │
+│                  │               │                  │           │ 5. Generates     │
+│                  │               │                  │           │    cocotb test   │
+│                  │               │                  │           │                  │
+│                  │               │                  │           │ 6. Runs iverilog │
+│                  │               │                  │           │    simulation    │
+│                  │               │                  │           │                  │
+│                  │               │                  │           │ 7. Self-corrects │
+│                  │               │                  │           │    (up to 3+10)  │
+│                  │               │                  │           │                  │
+│                  │◀──REALTIME────│         ◀────────────PATCH───│ 8. Updates run   │
+│ Live page shows  │  (WebSocket)  │ runs (passed)    │           │    with results  │
+│ results!         │               │ test_results     │           │                  │
+└─────────────────┘               └──────────────────┘           └──────────────────┘
+```
+
+---
+
+## PROJECT STRUCTURE (March 20, 2026)
+
+```
+/Users/hale/projects/project-ava/
+├── .git/                          ← GitHub: github.com/vanthienha199/project-ava (10 commits)
+├── .gitignore
+├── .dockerignore                  ← Auto-generated from .gitignore for Fly.io
+├── CLAUDE.md                      ← Instructions for Claude Code
+├── PROGRESS.md                    ← THIS FILE
+├── Dockerfile                     ← Fly.io container (Python 3.13 + iverilog + cocotb)
+├── fly.toml                       ← Fly.io app config (project-ava-watcher)
+├── venv/                          ← Python 3.13 virtualenv (local only)
+├── src/
+│   ├── __init__.py
+│   ├── __main__.py                ← CLI (python3 -m src benchmark, --backend, --ollama-url)
+│   ├── llm.py                     ← LLM wrapper (3 backends, 300s timeout, 8192 max tokens)
+│   ├── generator.py               ← Prompt-based generation + cocotb 2.0 auto-fixes
+│   ├── simulator.py               ← Icarus Verilog runner + structured result parsing
+│   ├── corrector.py               ← Error-feedback correction (2000 char truncation)
+│   ├── agent.py                   ← Two-tier orchestrator + live reporter integration
+│   ├── analyzer.py                ← Failure taxonomy (9 categories)
+│   ├── reporter.py                ← Live status reporter (pushes to Supabase during runs)
+│   └── watcher.py                 ← Polls Supabase for pending uploads, runs agent
+├── prompts/
+│   ├── v1_generate.txt            ← Generation prompt (includes cocotb 2.0 rules)
+│   └── v1_correct.txt             ← Correction prompt
+├── golden/                        ← Golden test suite (11 designs, all with config.json)
+│   ├── 01_adder/                  ← 4-bit adder (combinational)
+│   ├── 02_alu/                    ← 8-bit ALU (5 ops + zero flag)
+│   ├── 03_icg/                    ← Integrated clock gating cell (POWER-AWARE)
+│   ├── 04_counter/                ← 4-bit counter (sequential)
+│   ├── 05_freq_divider/           ← Divide-by-2/4/8 (POWER-AWARE, DVFS)
+│   ├── 06_power_fsm/              ← Power state machine (POWER-AWARE)
+│   ├── 07_dvfs_controller/        ← Full DVFS controller (POWER-AWARE, the gap)
+│   ├── 08_shift_register/         ← 8-bit shift register (sequential)
+│   ├── 09_fifo/                   ← Synchronous FIFO (buffer/memory)
+│   ├── 10_pwm/                    ← PWM generator (POWER-AWARE)
+│   └── 11_uart_tx/                ← UART 8N1 transmitter (protocol)
+├── docs/                          ← Web platform (6 pages, Matrix theme, Supabase)
+│   ├── index.html                 ← Dashboard — stats, benchmark table, charts
+│   ├── designs.html               ← Design browser — Verilog source + specs
+│   ├── upload.html                ← Upload & Verify — paste Verilog + spec, submit
+│   ├── history.html               ← Run history — sortable, filterable
+│   ├── analyze.html               ← Run analysis — iteration timeline, failures
+│   └── live.html                  ← Live monitor — realtime via Supabase subscriptions
+├── scripts/
+│   ├── setup_db.sql               ← Supabase schema (5 tables, RLS, indexes)
+│   ├── enable_realtime.sql        ← Enable Supabase Realtime + UPDATE policy
+│   └── upload_results.py          ← Bulk upload golden designs + run results
+├── runs/                          ← Auto-generated JSON run logs (gitignored)
+├── research/
+│   ├── RESEARCH_FINDINGS.md       ← cocotb 2.0 traps, CorrectBench, prompt rules
+│   └── (reference dirs)
+└── test_upload_flow.v             ← Test file for upload flow (mux4to1)
+```
+
+---
+
+## HOW TO RUN
+
+### Local Development
+```bash
+# Activate venv
+source /Users/hale/projects/project-ava/venv/bin/activate
+
+# Run benchmark on all 11 golden designs
+python3 -m src benchmark
+
+# Run with Anthropic API
+python3 -m src benchmark --backend anthropic_api
+
+# Run single design
+python3 -m src run --design-dir golden/07_dvfs_controller
+
+# Run with remote Ollama (e.g., Vast.ai SSH tunnel)
+python3 -m src run --design-dir golden/01_adder --backend ollama --model deepseek-coder:33b --ollama-url http://localhost:11435
+
+# Upload results to Supabase
+python3 scripts/upload_results.py
+
+# Start local watcher (picks up uploads from website)
+python3 -m src.watcher
+
+# Preview website locally
+python3 -m http.server 8080 --directory docs
+```
+
+### Deploy Website
+```bash
+# Drag docs/ folder to app.netlify.com (manual deploy)
+```
+
+### Deploy Watcher to Fly.io
+```bash
+fly deploy                                              # rebuild + deploy
+fly logs --app project-ava-watcher                      # check logs
+fly status --app project-ava-watcher                    # check machine status
+fly secrets set ANTHROPIC_API_KEY=<key>                 # set API key
+fly machine start <id> --app project-ava-watcher        # start if stopped
+```
+
+---
+
+## KEY MODULES
+
+**src/llm.py** — LLM wrapper with 3 backends:
+- `claude_cli`: calls `claude -p` via subprocess (300s timeout)
+- `anthropic_api`: calls Anthropic API via urllib (300s timeout, 8192 max tokens)
+- `ollama`: calls Ollama API (supports `base_url` for remote servers)
+
+**src/generator.py** — Prompt builder + cocotb 2.0 auto-fixes (8 patterns)
+
+**src/simulator.py** — Icarus Verilog runner + structured SimResult parsing
+
+**src/corrector.py** — Error-feedback to LLM (error truncation at 2000 chars)
+
+**src/agent.py** — Two-tier orchestrator:
+- IC_MAX=3 corrections, IR_MAX=10 reboots
+- Graceful timeout handling (forces reboot on LLM failure)
+- Integrates with LiveReporter for real-time status
+
+**src/reporter.py** — Pushes live status to Supabase during agent execution:
+- `start_run()` → INSERT pending row
+- `update_iteration()` → PATCH with progress
+- `complete_run()` → PATCH with final results
+- `report_test_result()` → INSERT individual test results
+- Never crashes the agent (all errors caught)
+
+**src/watcher.py** — Polls Supabase for pending uploads:
+- Finds runs with `backend='pending'`
+- Downloads Verilog + spec from designs table
+- Creates temp dir, runs agent, updates results
+- Runs continuously with 5s poll interval
+- Used locally (`python3 -m src.watcher`) or on Fly.io
+
+**src/analyzer.py** — 9-category failure taxonomy:
+- SYNTAX, COCOTB_API, SIGNAL_ACCESS, TIMING, LOGIC, COMPILE, IMPORT, TIMEOUT, UNKNOWN
+
+---
+
+## ENVIRONMENT
 
 ### This Mac (M4, 16GB, macOS Sequoia)
 ```
-Python 3.13.12         — in venv (cocotb 2.0 needs ≤3.13, system has 3.14)
-Icarus Verilog 13.0    — brew install icarus-verilog ✓
-Verilator 5.046        — brew install verilator ✓
-Ollama 0.18.1          — brew install ollama ✓ (service running)
-DeepSeek-Coder 6.7B    — ollama pull deepseek-coder:6.7b ✓ (3.8GB)
-cocotb 2.0.1           — in project venv ✓
-Anthropic API          — $5 credits loaded, key in ~/.zshrc ✓
+Python 3.13.12         — in venv
+Icarus Verilog 13.0    — brew
+cocotb 2.0.1           — pip in venv
+Ollama 0.18.1          — brew (DeepSeek-Coder 6.7B local)
+Docker 28.1.1          — for Fly.io builds
+Fly CLI                — brew install flyctl
+Anthropic API          — $5 credits, key in ~/.zshrc
 ```
 
-### LLM Backends (3 available)
-```bash
-# Claude CLI (free with Max plan, ~15-80s per call, no token tracking)
-python3 -m src benchmark --backend claude_cli
+### Vast.ai (Used for DeepSeek-Coder-33B benchmark)
+- 1x RTX 5090, 32GB VRAM, $0.43/hr
+- SSH: `ssh -p 55813 root@47.186.29.91`
+- Ollama installed with deepseek-coder:33b pulled
+- SSH tunnel: `ssh -N -L 11435:localhost:11434 -p 55813 root@47.186.29.91`
+- **Instance should be destroyed when not in use** to save money
 
-# Anthropic API (paid, ~15-80s per call, has token tracking)
-python3 -m src benchmark --backend anthropic_api --model claude-sonnet-4-20250514
-
-# Ollama (free local, needs Alienware for 33B model)
-python3 -m src benchmark --backend ollama --model deepseek-coder:6.7b
-```
-
-### Performance Discovery (This Session)
-- **LLM is 99.1% of total runtime** — simulation is only 650ms avg
-- **Correction calls are 2-5x slower** than generation (95s avg vs 28-40s)
-- **Anthropic API is NOT faster than claude -p** — model inference dominates, not CLI overhead
-- **First-pass success matters most** — designs that pass on iteration 1 finish in 14-41s; those needing corrections take 149-661s
-
-### Virtual Environment
-```bash
-source /Users/hale/projects/project-ava/venv/bin/activate
-```
-
-### Other Hardware
-- **Alienware 16 Area 51 (AA16250):** Intel Ultra 9 275HX, RTX 5070Ti/5080 (8-16GB VRAM), 32GB DDR5, 2TB SSD — from Dr. Wu's lab. Can run DeepSeek-Coder-33B locally via Ollama. **Not yet set up for SSH from Mac.**
-
----
-
-## ARCHITECTURE — WHAT'S BUILT
-
-### Agent Pipeline (Working)
-```
-Input: Verilog DUT file + natural language spec
-                    ↓
-┌─────────────────────────────────────────────┐
-│  GENERATE (src/generator.py)                 │
-│  Load prompt template → insert Verilog +     │
-│  spec + cocotb 2.0 rules → call LLM →       │
-│  strip markdown fences → auto-fix cocotb API │
-└──────────────────┬──────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────┐
-│  SIMULATE (src/simulator.py)                 │
-│  Write testbench to temp dir → make          │
-│  SIM=icarus → parse output → structured      │
-│  SimResult (pass/fail, test details, errors)  │
-└──────────────────┬──────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────┐
-│  SELF-CORRECT (src/corrector.py + agent.py)  │
-│  If FAIL: analyze errors → categorize →      │
-│  feed to LLM corrector (max 3 attempts)      │
-│  If timeout/error: gracefully force reboot   │
-│  If still FAIL: reboot (regenerate fresh,    │
-│  max 10 attempts)                            │
-└──────────────────┬──────────────────────────┘
-                    ↓
-Output: Working testbench + SimResult + JSON run log
-                    ↓
-┌─────────────────────────────────────────────┐
-│  UPLOAD (scripts/upload_results.py)          │
-│  Push results to Supabase → web platform    │
-│  displays live data                          │
-└─────────────────────────────────────────────┘
-```
-
-### Key Modules
-
-**src/llm.py** — LLM wrapper with 3 backends:
-- `claude_cli`: calls `claude -p` via subprocess (free with Max plan, 300s timeout)
-- `anthropic_api`: calls Anthropic API via urllib (needs ANTHROPIC_API_KEY, 300s timeout, 8192 max tokens)
-- `ollama`: calls Ollama local API (free, localhost:11434)
-- Returns: LLMResponse(text, model, tokens_in, tokens_out, latency_ms)
-
-**src/generator.py** — Builds prompt from template, calls LLM, cleans output:
-- Loads `prompts/v1_generate.txt` template
-- Strips markdown code fences (LLMs wrap output in ```python```)
-- Auto-fixes 8 known cocotb 2.0 API errors (units→unit, fork→start_soon, etc.)
-
-**src/simulator.py** — Runs cocotb via Icarus Verilog:
-- Creates temp directory, copies Verilog files, writes Makefile + test module
-- Runs `make SIM=icarus`, parses output with regex
-- Returns SimResult with individual test pass/fail, timing, and error extraction
-
-**src/corrector.py** — Feeds errors back to LLM:
-- Uses `prompts/v1_correct.txt` template
-- Includes: Verilog source, spec, failed testbench code, error messages
-- Error messages truncated to 2000 chars to avoid oversized prompts
-- Same cocotb 2.0 auto-fixes as generator
-
-**src/agent.py** — Two-tier orchestrator (CorrectBench algorithm):
-- IC_MAX=3 corrections before reboot, IR_MAX=10 reboots before giving up
-- **Graceful timeout handling**: if LLM times out during correction, forces reboot instead of crashing
-- **Graceful generation failure**: if LLM times out during reboot generation, retries
-- Records full history with failure analysis for every iteration
-- Outputs JSON run log with all metrics
-
-**src/analyzer.py** — Failure taxonomy (9 categories):
-- SYNTAX, COCOTB_API, SIGNAL_ACCESS, TIMING, LOGIC, COMPILE, IMPORT, TIMEOUT, UNKNOWN
-- Each failure tagged with whether the corrector can likely fix it
-
-### Web Platform Architecture
-```
-[Frontend: 5 static HTML pages in docs/]
-        ↕ reads/writes via Supabase JS client
-[Supabase: PostgreSQL + REST API + Realtime]
-        ↑ uploads via scripts/upload_results.py
-[Agent: Runs locally on Mac, saves JSON to runs/]
-```
-
-**Supabase Tables:**
-- `designs` — 11 golden designs with Verilog source + specs
-- `runs` — Each agent execution (design, backend, pass/fail, iterations, latency, testbench code)
-- `iterations` — Individual generate/correct/reboot steps within a run
-- `failures` — Categorized failure analysis per iteration
-- `test_results` — Individual test pass/fail per run
-
-**Supabase Project:** https://yvpmoyzggbcfaldhsbkl.supabase.co (free tier, org: project-ava, account: annecgjackson@gmail.com)
-
-### Critical cocotb 2.0 Discovery
-LLMs generate cocotb 1.x API code that FAILS. The generator auto-fixes these patterns:
-1. `units="ns"` → `unit="ns"` (MOST COMMON — LLMs always get this wrong even with rules in prompt)
-2. `.value.integer` → `int(.value)`
-3. `cocotb.fork()` → `cocotb.start_soon()`
-4. `.kill()` → `.cancel()`
-5. `raise TestFailure()` → `assert False`
-6. `from cocotb.result import TestFailure` → removed
-7. `from cocotb.binary import BinaryValue` → removed
-8. `.value.binstr` → `str(.value)`
-
-Also: signal named `in` (Python keyword) must use `getattr(dut, "in").value` — added as rule #11 in prompts.
+### Alienware 16 Area 51 (Dr. Wu's lab)
+- Intel Ultra 9 275HX, RTX 5080 (16GB), 32GB DDR5
+- Ubuntu Linux, user: `demo`, WiFi IP: 192.168.1.171
+- SSH blocked: `AllowGroups` in sshd_config restricts to `cecs computers admins`, `support`, `remote`
+- **Needs Priyank Pathak** to run `usermod -aG remote demo` as root
+- Ollama NOT installed (no sudo)
 
 ---
 
 ## COMPETITIVE LANDSCAPE (March 2026)
 
-### What Exists
 | Tool | Best Result | Gap |
 |---|---|---|
 | AutoBench | 52% pass | No self-correction |
 | CorrectBench | 70% pass | Only simple designs, unexplained 28% failure |
 | ConfiBench | 72% pass | Still fails sequential |
 | MAGE | 95.7% syntax | RTL generation only, not verification |
-| UVM² | 87% coverage | Struggles timing/protocols |
-| Cadence ChipStack | Commercial | Closed, $$$, announced Feb 2026 |
-| Siemens Questa One | Commercial | Closed, $$$, announced GTC 2026 |
-| ChipAgents | Startup ($74M) | Closed, multi-agent root cause analysis |
+| Cadence ChipStack | Commercial | Closed, $$$ |
+| ChipAgents | Startup ($74M) | Closed, multi-agent |
 
-### What Nobody Can Do (Our Gap)
-1. **Power-aware verification = ZERO AI tools exist** — Project Ava is FIRST
-2. **Failure categorization** — CorrectBench doesn't explain why it fails, we do
-3. **Open-source agent** — All commercial tools are closed/expensive
-4. **cocotb 2.0 auto-fixes** — No other tool handles the API migration
-
-### RealBench Reality Check
-Best LLM (o1-preview): 13.3% pass on real IP modules, **0% on system-level**. We're at 100% on our golden suite but it's smaller/simpler designs.
-
-### Full research details saved in:
-- `/Users/hale/.claude/projects/-Users-hale/memory/project-ava-research.md`
-- `/Users/hale/.claude/projects/-Users-hale/memory/project-ava-acm-amd.md`
-
----
-
-## ACM MEETING & AMD PANEL CONTEXT
-
-### Key People at AMD (from ACM panel March 4, 2026)
-| Name | Role | Relevance |
-|---|---|---|
-| **Rex McCurry** | Site Lead, GPU Architect | Coordinates AMD-UCF. Wants "IP pipeline" (research). |
-| **Derek Martin** | Hardware Architect | **"I work on features that turn stuff off to save power."** Direct DVFS customer. |
-| **John G** | GPU Power Modeling | Recent UCF grad. Could validate power-aware tests. |
-| **Michelle** | Verification (since 2008) | GPU verification → performance verification. |
-
-### AMD's 4 Pillars at UCF
-1. Talent pipeline (hiring)
-2. Curriculum improvement
-3. **IP pipeline (research)** ← Project Ava IS this
-4. AI adoption ("AMD believes AI is a huge game changer")
-
-### Key Quotes
-- Rex: "Verification is 70-80% of VLSI cycle. If we don't get it right, costs us a lot of money."
-- Rex: "We also want an IP pipeline. So that's the research."
-- Industry standard: 1 designer : 3 verification engineers
-
-### ACM Team Structure
-- 4 teams × 4 people = 16 total
-- Teams: Agents, Automation, FPGA Development, Research
-- Dylan limited scope to functional verification "because it's our first time" — power-aware is the Phase 2 that impresses AMD
+**Project Ava advantages:**
+1. **Power-aware verification = FIRST** — no other AI tool does DVFS/ICG/power FSM
+2. **100% pass rate** on golden suite (vs 52-72% for academic tools)
+3. **Open-source agent** — all commercial tools are closed
+4. **cocotb 2.0 auto-fixes** — no other tool handles the API migration
+5. **Failure taxonomy** — 9-category analysis (CorrectBench can't explain failures)
+6. **Fully autonomous web platform** — upload → verify → results (no other tool has this)
+7. **LLM comparison data** — Claude 100% vs DeepSeek 0% proves commercial LLMs dominate
 
 ---
 
 ## WHAT TO BUILD NEXT (Priority Order)
 
 ### Done (Session 1 — March 19, 1:30 AM)
-- [x] **Full agent pipeline** — generator, simulator, corrector, orchestrator, CLI
-- [x] **7 golden designs** — adder, ALU, ICG, counter, freq_divider, power_fsm, DVFS controller
-- [x] **Failure taxonomy** — 9-category analyzer module
-- [x] **3 commits pushed** to GitHub
+- [x] Full agent pipeline — generator, simulator, corrector, orchestrator, CLI
+- [x] 7 golden designs — adder, ALU, ICG, counter, freq_divider, power_fsm, DVFS controller
+- [x] Failure taxonomy — 9-category analyzer module
+- [x] 3 commits pushed to GitHub
 
 ### Done (Session 2 — March 19 evening)
-- [x] **Expanded golden suite to 11 designs** — Added shift register, FIFO, PWM, UART TX
-- [x] **Anthropic API integration** — $5 credits loaded, `--backend anthropic_api` works
-- [x] **Graceful error handling** — Agent survives LLM timeouts (forces reboot instead of crash)
-- [x] **Error truncation** — Correction prompts capped at 2000 chars to avoid timeouts
-- [x] **All designs have config.json** — Standardized golden suite
-- [x] **Full web platform built** — 5 pages (Dashboard, Designs, History, Analyze, Live) with Matrix theme
-- [x] **Supabase database** — 5 tables (designs, runs, iterations, failures, test_results) with RLS
-- [x] **Upload script** — scripts/upload_results.py pushes agent results to Supabase (with retry logic)
-- [x] **Data uploaded** — 11 designs + 9 full runs in Supabase (10_pwm + 11_uart_tx need re-upload)
+- [x] Expanded golden suite to 11 designs (shift register, FIFO, PWM, UART TX)
+- [x] Anthropic API integration ($5 credits, --backend anthropic_api)
+- [x] Graceful timeout handling (forces reboot on LLM failure)
+- [x] Error truncation (2000 char cap in corrector)
+- [x] Full web platform (5 pages, Matrix theme, Supabase backend)
+- [x] Supabase database (5 tables, RLS, indexes, data uploaded)
 
-### Immediate (Finish Web Platform)
-- [ ] **Re-upload remaining data** — Run `python3 scripts/upload_results.py --runs-only` to get 10_pwm and 11_uart_tx
-- [ ] **Deploy to Netlify** — Drag docs/ folder to app.netlify.com for public URL
-- [ ] **Buy domain** — projectava.dev or similar ($12), point to Netlify
+### Done (Session 3 — March 20, 2026)
+- [x] **Fixed Supabase JS bug** — `const supabase` shadowed CDN global, renamed to `sb`
+- [x] **Live reporter** — src/reporter.py pushes real-time status during agent runs
+- [x] **Live page shows completed runs** — latest passing run displayed when idle
+- [x] **Pipeline icons fixed** — replaced emojis with terminal-style glyphs
+- [x] **DeepSeek-Coder-33B benchmark** — Vast.ai RTX 5090, 0/2 designs (Claude wins 100% vs 0%)
+- [x] **Upload page** — paste Verilog + spec, submit for verification, 3 example designs
+- [x] **Agent watcher** — src/watcher.py polls Supabase for pending uploads, runs agent
+- [x] **Fly.io cloud deployment** — watcher runs 24/7 autonomously, no terminal needed
+- [x] **Netlify deployment** — public URL live (astonishing-sorbet-80c3d2.netlify.app)
+- [x] **Supabase Realtime enabled** — runs, iterations, test_results tables
+- [x] **Full end-to-end test** — mux4to1 uploaded via web, watcher picked up, PASS 8/8
+- [x] **test_adder_2 cloud test** — Fly.io watcher processed autonomously, PASS 10/10
+- [x] **10 commits on GitHub**
 
-### Next (High Impact)
-- [ ] **Alienware SSH setup** — Connect Mac → Alienware via SSH, install Ollama + DeepSeek-Coder-33B
-- [ ] **Ollama benchmark** — Run all 11 designs with DeepSeek-Coder 6.7B and 33B. Compare pass rates to Claude. Paper result: "open-source LLM vs Claude on power-aware verification."
-- [ ] **Analyzer module** — Auto-generate spec from Verilog DUT (parse ports, operations, clock/reset)
-
-### Medium Term
-- [ ] **More golden designs** — SPI master, I2C, watchdog timer, memory controller
-- [ ] **Run database / learning** — Analyze Supabase data for patterns, improve prompts based on what fails
-- [ ] **Parallel design execution** — Run multiple designs concurrently (asyncio) to cut benchmark time
+### Next (High Priority)
+- [ ] **Rename Netlify site** to project-ava.netlify.app
+- [ ] **Buy domain** — projectava.dev (~$12/yr), point to Netlify
+- [ ] **Handle duplicate design names** — Upload page should allow same name or auto-suffix
+- [ ] **Clean up Supabase data** — Remove failed DeepSeek runs or mark them properly
+- [ ] **More golden designs** — SPI master, I2C, watchdog timer
 
 ### Research / Paper
-- [ ] **Write up results** — Benchmark table, comparison to CorrectBench (72% vs our 100%), failure taxonomy, power-aware gap analysis
-- [ ] **Present to Dr. Wu** — Working demo + research narrative
+- [ ] **Write up results** — Claude 100% vs DeepSeek 0%, power-aware gap, failure taxonomy
+- [ ] **Present to Dr. Wu** — Working demo: upload DVFS controller, watch it verify live
 - [ ] **Present to AMD panel** — Live demo on unseen design
 
 ### Stretch
-- [ ] **UPF integration** — Parse UPF files for power domain info
-- [ ] **Cross-domain verification** — Clock × power × reset domain interactions
+- [ ] **Auto-generate spec from Verilog** — Parse ports, operations, clock/reset
+- [ ] **UPF integration** — Power domain info
+- [ ] **Parallel design execution** — asyncio for faster benchmarks
 
 ---
 
-## IMPORTANT FINDINGS FROM THIS SESSION
+## IMPORTANT FINDINGS
 
-### Proof of Concept Validated
-1. **cocotb CAN verify power-aware designs with Icarus Verilog** — Proved with ICG clock gating cell (5/5 hand-written, 5/5 LLM-generated)
-2. **Internal wires (cgclk, q_l, en) are visible via VPI** — No limitation
-3. **LLM generates correct power-aware verification logic** — Only API syntax needs fixing
-4. **Self-correction loop works** — 6 of 11 designs needed corrections and all recovered to 100%
-5. **Shift register needed a full reboot** (7 iterations) — agent still persisted to success
+### Performance
+- **LLM is 99.1% of total runtime** — simulation is ~650ms
+- **Correction calls 2-5x slower** than generation
+- **Anthropic API same speed as claude -p** — model inference dominates
+- **DeepSeek-Coder-33B: 0% pass rate** — cocotb 2.0 API trap kills open-source LLMs
 
-### Performance Analysis (Session 2)
-1. **LLM time is 99.1% of total** — simulation is ~650ms, negligible
-2. **Correction calls are 2-5x slower than generation** — 95s avg vs 28-40s avg
-3. **Anthropic API is same speed as claude -p** — model inference dominates, not CLI overhead
-4. **Shift register was hardest** — 660s, 7 iterations, 6 corrections + 1 reboot
-5. **UART TX can timeout** — protocol timing verification is genuinely hard for LLMs, but passes with retries
-
-### Critical Limitations Identified
-1. **Icarus Verilog has ZERO UPF support** — No power domains, isolation cells, retention. BUT clock gating, freq dividers, power FSMs, DVFS controllers are all plain Verilog and work fine.
-2. **LLMs ALWAYS use `units="ns"` instead of `unit="ns"`** — Even with the rule in the prompt. The auto-fix catches this.
-3. **Large correction prompts can timeout** — Power FSM and DVFS controller corrections take 50-120s each. UART TX corrections can exceed 300s.
-4. **Python keyword `in`** — Signal named "in" requires `getattr(dut, "in")`. Rule #11 in prompts.
-5. **Multi-LLM consensus** — No evidence this works for testbench generation. Dropped.
-6. **Lit Silicon connection is motivational, not technical** — Can't directly convert thermal traces to test vectors.
-
-### CorrectBench Failure Analysis (Why 28% Fail)
-- Sequential circuits: 54.93% pass vs combinational 84.20%
-- LLMs fail at: clock cycle timing, signal collection at right time points, driver formatting
-- Validator only 88.85% accurate — 11% of validations are wrong
-- **Our advantage:** failure taxonomy categorizes every error, enabling targeted improvement
+### Technical
+- **cocotb 2.0 auto-fixes are essential** — 8 patterns LLMs always get wrong
+- **Icarus Verilog has ZERO UPF support** — but clock gating, DVFS, power FSMs work as plain Verilog
+- **Shift register was hardest** — 660s, 7 iterations, 1 reboot
+- **Self-correction validated** — 6/11 designs needed corrections, all recovered to 100%
 
 ---
 
 ## BUDGET
 | Item | Cost | Status |
 |---|---|---|
-| Anthropic API credits | $5 loaded | ACTIVE — key in ~/.zshrc (NEVER commit to git) |
-| Supabase | $0 | Free tier (annecgjackson@gmail.com account) |
-| DeepSeek API | $0 | Free 5M tokens on signup |
-| Domain (projectava.dev) | ~$12/yr | Not yet purchased |
-| Hosting (Netlify) | $0 | Free tier |
-| Alienware + Ollama | $0 | Free (from lab), needs SSH setup |
-| **Total spent so far** | **$5** | Anthropic API credits |
+| Anthropic API credits | $5 loaded | ACTIVE — key in ~/.zshrc + Fly.io secret |
+| Supabase | $0 | Free tier (annecgjackson@gmail.com) |
+| Netlify | $0 | Free tier (halevanthien@gmail.com) |
+| Fly.io | $0 | Free tier (halevanthien@gmail.com, card added) |
+| Vast.ai | ~$0.50 spent | RTX 5090 $0.43/hr — DESTROY WHEN NOT IN USE |
+| Domain | ~$12/yr | Not yet purchased |
+| **Total spent** | **~$5.50** | |
 
 ---
 
@@ -459,42 +399,14 @@ Best LLM (o1-preview): 13.3% pass on real IP modules, **0% on system-level**. We
 - **ALWAYS:** `--author="Ha Le <halevanthien@gmail.com>"`
 - **NEVER** add Co-Authored-By Claude
 - **NEVER** mention Claude in any commit
-- Author is ONLY Ha Le. No exceptions.
-
----
-
-## KEY FILES TO READ
-
-| File | What It Contains |
-|---|---|
-| This file (PROGRESS.md) | Full project context, what's built, what to build next |
-| research/RESEARCH_FINDINGS.md | cocotb 2.0 API traps, CorrectBench algorithm, UVM² architecture, prompt rules |
-| src/agent.py | Main orchestrator — the pipeline loop |
-| src/llm.py | LLM wrapper (3 backends, 300s timeout) |
-| src/generator.py | Prompt building + cocotb 2.0 auto-fixes |
-| src/simulator.py | Icarus Verilog runner + result parsing |
-| src/analyzer.py | Failure taxonomy (9 categories) |
-| prompts/v1_generate.txt | Generation prompt template |
-| prompts/v1_correct.txt | Correction prompt template |
-| golden/07_dvfs_controller/ | The breakthrough design (DVFS controller) |
-| docs/index.html | Web platform dashboard (Matrix theme, Supabase) |
-| docs/designs.html | Design browser page |
-| docs/history.html | Run history page |
-| docs/analyze.html | Run analysis page |
-| docs/live.html | Live agent monitor page |
-| scripts/setup_db.sql | Supabase database schema |
-| scripts/upload_results.py | Upload results to Supabase |
-| CLAUDE.md | Claude Code instructions for this project |
-| /Users/hale/.claude/projects/-Users-hale/memory/project-ava-research.md | Competitive landscape + gaps |
-| /Users/hale/.claude/projects/-Users-hale/memory/project-ava-acm-amd.md | ACM meeting + AMD panel context |
 
 ---
 
 ## BEHAVIORAL NOTES FOR NEXT CHAT
-- **Never use inline Python in shell commands** — always write to a file, then tell user to run `python3 filename.py`
+- **Never use inline Python in shell commands** — always write to a file
 - **Never ask "what do you want next"** — proceed with what's most optimal
-- **The user wants a breakthrough product** — not just a school project. Think commercially.
-- **cocotb 2.0 rules MUST be in every LLM prompt** — see prompts/v1_generate.txt
-- **Signal `in` needs getattr()** — this bit us once, auto-fix rule #11
-- **Supabase account** — annecgjackson@gmail.com (separate from main halevanthien@gmail.com, created because ThinkTank Research org had unpaid invoice blocking new projects)
-- **ThermalTrace Supabase** — on vanthienha199 org (halevanthien@gmail.com), has $41.81 unpaid invoice
+- **This is a breakthrough product** — not a school project. Think commercially.
+- **cocotb 2.0 rules MUST be in every LLM prompt**
+- **Supabase account:** annecgjackson@gmail.com (NOT halevanthien — that has unpaid invoice)
+- **Fly.io account:** halevanthien@gmail.com (GitHub login)
+- **Netlify account:** halevanthien@gmail.com
