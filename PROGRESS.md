@@ -1,5 +1,5 @@
 # Project Ava — Full Progress & Context for New Chat
-**Last Updated:** March 20, 2026, 12:45 PM EST
+**Last Updated:** March 20, 2026, 5:30 PM EST
 **Author:** Ha Le (halevanthien@gmail.com)
 **READ THIS FILE 100% BEFORE DOING ANYTHING**
 
@@ -11,7 +11,7 @@ Project Ava (Automated Intelligent Verification with Agents) is a **fully autono
 
 **It is now a real agentic AI application** — no terminal needed. The watcher runs 24/7 on Fly.io, picks up uploads from Supabase, and verifies designs autonomously using the Anthropic API.
 
-### CURRENT STATUS: FULLY AUTONOMOUS CLOUD PLATFORM — 11/11 DESIGNS, 103/103 TESTS
+### CURRENT STATUS: 18/18 DESIGNS, 182/182 TESTS, 100% PASS RATE
 
 | Design | Type | Tests | Iterations | Self-corrected? |
 |---|---|---|---|---|
@@ -26,13 +26,22 @@ Project Ava (Automated Intelligent Verification with Agents) is a **fully autono
 | 09_fifo | Buffer/Memory | 11/11 | 2 | Yes (1 correction) |
 | 10_pwm | **Power-aware** | 11/11 | 1 | No |
 | 11_uart_tx | Protocol | 10/10 | 2 | Yes (1 correction) |
+| 12_watchdog | Timer/Watchdog | 10/10 | 6 | Yes (5 corrections + 1 reboot) |
+| 13_traffic_light | FSM/Controller | 9/9 | 5 | Yes (4 corrections + 1 reboot) |
+| 14_spi_master | Protocol (SPI) | 11/11 | 1 | No (first-pass!) |
+| 15_priority_encoder | Priority Logic | 14/14 | 2 | Yes (1 correction) |
+| 16_i2c_master | Protocol (I2C) | 10/10 | 7 | Yes (6 corrections + 1 reboot) |
+| 17_arbiter | Sequential (round-robin) | 11/11 | 5 | Yes (4 corrections + 1 reboot) |
+| 18_memory_controller | Buffer/Memory (SRAM) | 14/14 | 2 | Yes (1 correction) |
 
-**Total: 11/11 designs passed, 103/103 tests, 5 power-aware designs, 100% pass rate.**
+**Total: 18/18 designs passed, 182/182 tests, 8 categories, 5 power-aware designs, 100% pass rate.**
+
+Designs 12-15 are from **external open-source repos** (Efabless, nandland, fpga4student, harishs1313) — the agent had never seen them. This proves it works on unseen designs, not just pre-baked ones.
 
 ### LLM Comparison (March 20, 2026)
 | LLM | Backend | Adder | ALU | Pass Rate | Notes |
 |---|---|---|---|---|---|
-| **Claude (Sonnet)** | claude_cli / anthropic_api | PASS 6/6 | PASS 6/6 | **100%** (11/11) | All designs pass |
+| **Claude (Sonnet)** | claude_cli / anthropic_api | PASS 6/6 | PASS 6/6 | **100%** (18/18) | All designs pass |
 | **DeepSeek-Coder-33B** | Ollama (RTX 5090 via Vast.ai) | FAIL 0/0 | FAIL 0/4 | **0%** (0/2) | cocotb 2.0 trap kills it |
 
 ### Who It Serves
@@ -45,20 +54,62 @@ Derek Martin (AMD engineer) works on DVFS verification. Dr. Wu's Lit Silicon pap
 
 ---
 
+## DR. WU'S AGENTIC AI DIRECTION (CRITICAL CONTEXT)
+
+Dr. Wu is an **AI systems/infrastructure researcher**, not an AI applications researcher. His interest in agentic AI:
+
+> "You can look into agentic AI systems. How such systems are built, what system component are needed. Like which parts of the workload are on CPU, what are on GPU, how many GPU and CPU are needed."
+
+He sent Ha Le this paper: **arXiv:2506.04301 — "The Cost of Dynamic Reasoning: Demystifying AI Agents and Test-Time Scaling from an AI Infrastructure Perspective"** (HPCA 2026). Key findings:
+- Tool-augmented agents need **9.2x more LLM calls** per request than single-turn
+- GPU idle **30-55% of the time** while CPU-bound tools execute
+- Agentic inference uses **62-137x more GPU energy** per query than static inference
+- **CPU is 50-90% of total latency** in agentic workflows (not GPU!)
+
+**Decision (Session 4):** Keep Project Ava separate from infrastructure research. Ava is the verification tool. Infrastructure characterization of agentic workloads would be a separate project. Don't try to combine both — do each well.
+
+### Key Papers for Dr. Wu (identified in session 4)
+1. **arXiv:2506.04301** — "Cost of Dynamic Reasoning" (the one Dr. Wu sent — HPCA 2026)
+2. **arXiv:2511.00739** — "A CPU-Centric Perspective on Agentic AI" (Georgia Tech + Intel)
+3. **arXiv:2506.24045** — "Agent.xpu" — Heterogeneous SoC scheduling for agents
+4. **arXiv:2509.20241** — "Energy Use of AI Inference" (Microsoft) — 13x energy with test-time scaling
+5. **AMD blog:** "Agentic AI Brings New Attention to CPUs" — AMD sees CPU as the agentic bottleneck
+
+### AMD Panel Context (March 4, 2026 ACM meeting)
+- **Rex McCurry** — Site Lead, GPU Architect. Coordinates AMD-UCF. Wants "IP pipeline" (research).
+- **Derek Martin** — Hardware Architect. "I work on features that turn stuff off to save power." Direct DVFS customer.
+- **John G** — GPU Power Modeling. Recent UCF grad.
+- **Michelle** — Verification since 2008. GPU verification → performance verification.
+- Rex: "Verification is 70-80% of VLSI cycle. If we don't get it right, costs us a lot of money."
+- Rex: "We also want an IP pipeline. So that's the research."
+- AMD's 4 pillars at UCF: talent pipeline, curriculum, **IP pipeline (research)**, AI adoption
+
+### Dr. Wu Communication Timeline
+- Dr. Wu told Ha Le to research agentic AI systems
+- Sent two papers: arXiv:2506.04301 (Cost of Dynamic Reasoning) + arXiv:2511.09861 (Lit Silicon)
+- Ha Le built ThinkTank (GWAP for PRM training data) — Dr. Wu liked it, asked for 10-15min presentation
+- Dr. Wu processing Ha Le's AMD machine access (th273073@ucf.edu, userid th273073)
+- Plans to have Ha Le run lit_silicon on advanced AMD machines once access granted
+- Dr. Wu's zoom: https://ucf.zoom.us/my/meeting.diwu
+- Group meetings: Wednesday 2 PM, HEC356 (in-person) or Zoom
+
+---
+
 ## LIVE DEPLOYMENT (March 20, 2026)
 
 ### Public Website
-- **URL:** https://astonishing-sorbet-80c3d2.netlify.app (rename to project-ava.netlify.app)
+- **URL:** https://project-ava-ucf.netlify.app (renamed from astonishing-sorbet)
 - **Host:** Netlify (free tier) — deploy by dragging `docs/` folder
 - **6 pages:** Dashboard, Designs, Upload, History, Analyze, Live
 - **Theme:** Matrix (ThermalTrace clone) — #000 bg, #00ff00 green, Share Tech Mono, matrix rain
+- **New in session 4:** Testbench viewer on Live page (shows AI-generated code with COPY button)
 
 ### Supabase Database
 - **URL:** https://yvpmoyzggbcfaldhsbkl.supabase.co
 - **Account:** annecgjackson@gmail.com (free tier)
 - **Tables:** designs, runs, iterations, failures, test_results
 - **Realtime:** Enabled on runs, iterations, test_results (for Live page)
-- **RLS:** Anonymous SELECT on all, INSERT on all, UPDATE on runs
+- **RLS:** Anonymous SELECT on all, INSERT on all, UPDATE on runs + designs
 
 ### Fly.io Cloud Watcher
 - **App:** project-ava-watcher (https://fly.io/apps/project-ava-watcher)
@@ -74,7 +125,7 @@ Derek Martin (AMD engineer) works on DVFS verification. Dr. Wu's Lit Silicon pap
 
 ### GitHub
 - **Repo:** github.com/vanthienha199/project-ava
-- **Commits:** 10 on main
+- **Commits:** 12 on main (as of session 4)
 ```
 f58248f — Initial release: agentic hardware verification framework
 4e9671a — Add power state machine and DVFS controller to golden suite
@@ -85,7 +136,9 @@ dfa19c7 — Add failure analysis taxonomy to agent pipeline
 0812011 — Show latest passing run on Live page when idle
 70bf7ad — Add Upload page and agent watcher for interactive verification
 a4e8da5 — Add Fly.io cloud deployment for autonomous watcher
-(next)  — Update PROGRESS.md with session 3 context
+ac8d001 — Update PROGRESS.md with session 3 context and add test file
+e834cfd — Expand to 15 designs with external sources, add testbench viewer
+(next)  — Update PROGRESS.md with session 4 context
 ```
 
 ---
@@ -120,6 +173,10 @@ User (Browser)                     Supabase Cloud                  Fly.io (Watch
 │                  │◀──REALTIME────│         ◀────────────PATCH───│ 8. Updates run   │
 │ Live page shows  │  (WebSocket)  │ runs (passed)    │           │    with results  │
 │ results!         │               │ test_results     │           │                  │
+│                  │               │                  │           │                  │
+│ 3. Testbench     │               │                  │           │                  │
+│    viewer shows  │               │                  │           │                  │
+│    generated code│               │                  │           │                  │
 └─────────────────┘               └──────────────────┘           └──────────────────┘
 ```
 
@@ -129,7 +186,7 @@ User (Browser)                     Supabase Cloud                  Fly.io (Watch
 
 ```
 /Users/hale/projects/project-ava/
-├── .git/                          ← GitHub: github.com/vanthienha199/project-ava (10 commits)
+├── .git/                          ← GitHub: github.com/vanthienha199/project-ava (12 commits)
 ├── .gitignore
 ├── .dockerignore                  ← Auto-generated from .gitignore for Fly.io
 ├── CLAUDE.md                      ← Instructions for Claude Code
@@ -151,7 +208,7 @@ User (Browser)                     Supabase Cloud                  Fly.io (Watch
 ├── prompts/
 │   ├── v1_generate.txt            ← Generation prompt (includes cocotb 2.0 rules)
 │   └── v1_correct.txt             ← Correction prompt
-├── golden/                        ← Golden test suite (11 designs, all with config.json)
+├── golden/                        ← Golden test suite (18 designs)
 │   ├── 01_adder/                  ← 4-bit adder (combinational)
 │   ├── 02_alu/                    ← 8-bit ALU (5 ops + zero flag)
 │   ├── 03_icg/                    ← Integrated clock gating cell (POWER-AWARE)
@@ -162,17 +219,24 @@ User (Browser)                     Supabase Cloud                  Fly.io (Watch
 │   ├── 08_shift_register/         ← 8-bit shift register (sequential)
 │   ├── 09_fifo/                   ← Synchronous FIFO (buffer/memory)
 │   ├── 10_pwm/                    ← PWM generator (POWER-AWARE)
-│   └── 11_uart_tx/                ← UART 8N1 transmitter (protocol)
+│   ├── 11_uart_tx/                ← UART 8N1 transmitter (protocol)
+│   ├── 12_watchdog/               ← 32-bit watchdog timer (from Efabless EF_WDT32)
+│   ├── 13_traffic_light/          ← Highway/farm road FSM (from fpga4student)
+│   ├── 14_spi_master/             ← SPI Mode 0 master (from nandland, MIT license)
+│   ├── 15_priority_encoder/       ← 8-input interrupt priority encoder (from harishs1313)
+│   ├── 16_i2c_master/            ← I2C single-byte master (protocol, session 5)
+│   ├── 17_arbiter/               ← 4-port round-robin arbiter (sequential, session 5)
+│   └── 18_memory_controller/     ← 256x8 synchronous SRAM controller (buffer/memory, session 5)
 ├── docs/                          ← Web platform (6 pages, Matrix theme, Supabase)
 │   ├── index.html                 ← Dashboard — stats, benchmark table, charts
 │   ├── designs.html               ← Design browser — Verilog source + specs
-│   ├── upload.html                ← Upload & Verify — paste Verilog + spec, submit
+│   ├── upload.html                ← Upload & Verify — handles duplicate names (upsert)
 │   ├── history.html               ← Run history — sortable, filterable
 │   ├── analyze.html               ← Run analysis — iteration timeline, failures
-│   └── live.html                  ← Live monitor — realtime via Supabase subscriptions
+│   └── live.html                  ← Live monitor + testbench viewer + copy button
 ├── scripts/
 │   ├── setup_db.sql               ← Supabase schema (5 tables, RLS, indexes)
-│   ├── enable_realtime.sql        ← Enable Supabase Realtime + UPDATE policy
+│   ├── enable_realtime.sql        ← Enable Realtime + UPDATE policies (runs + designs)
 │   └── upload_results.py          ← Bulk upload golden designs + run results
 ├── runs/                          ← Auto-generated JSON run logs (gitignored)
 ├── research/
@@ -190,7 +254,7 @@ User (Browser)                     Supabase Cloud                  Fly.io (Watch
 # Activate venv
 source /Users/hale/projects/project-ava/venv/bin/activate
 
-# Run benchmark on all 11 golden designs
+# Run benchmark on all 15 golden designs
 python3 -m src benchmark
 
 # Run with Anthropic API
@@ -260,6 +324,12 @@ fly machine start <id> --app project-ava-watcher        # start if stopped
 - Runs continuously with 5s poll interval
 - Used locally (`python3 -m src.watcher`) or on Fly.io
 
+**src/__main__.py** — CLI entry point:
+- `python3 -m src run --design-dir <dir>` — single design
+- `python3 -m src benchmark` — all golden designs
+- Reads spec from `spec.txt` OR `config.json` (session 4 fix)
+- Supports `--backend`, `--model`, `--ollama-url`
+
 **src/analyzer.py** — 9-category failure taxonomy:
 - SYNTAX, COCOTB_API, SIGNAL_ACCESS, TIMING, LOGIC, COMPILE, IMPORT, TIMEOUT, UNKNOWN
 
@@ -292,6 +362,13 @@ Anthropic API          — $5 credits, key in ~/.zshrc
 - **Needs Priyank Pathak** to run `usermod -aG remote demo` as root
 - Ollama NOT installed (no sudo)
 
+### AMD Machine Access (pending)
+- Dr. Wu submitted Ha Le's info to AMD
+- Name: Ha Le, Email: th273073@ucf.edu, userid: th273073
+- GitHub: vanthienha199, SSH key: RSA (submitted)
+- Estimated ~1 week for access
+- Plan: Run lit_silicon on advanced AMD GPUs once access granted
+
 ---
 
 ## COMPETITIVE LANDSCAPE (March 2026)
@@ -307,12 +384,14 @@ Anthropic API          — $5 credits, key in ~/.zshrc
 
 **Project Ava advantages:**
 1. **Power-aware verification = FIRST** — no other AI tool does DVFS/ICG/power FSM
-2. **100% pass rate** on golden suite (vs 52-72% for academic tools)
-3. **Open-source agent** — all commercial tools are closed
-4. **cocotb 2.0 auto-fixes** — no other tool handles the API migration
-5. **Failure taxonomy** — 9-category analysis (CorrectBench can't explain failures)
-6. **Fully autonomous web platform** — upload → verify → results (no other tool has this)
-7. **LLM comparison data** — Claude 100% vs DeepSeek 0% proves commercial LLMs dominate
+2. **100% pass rate** on 15-design golden suite (vs 52-72% for academic tools)
+3. **External designs proven** — 4 designs from open-source repos, never seen before, all pass
+4. **Open-source agent** — all commercial tools are closed
+5. **cocotb 2.0 auto-fixes** — no other tool handles the API migration
+6. **Failure taxonomy** — 9-category analysis (CorrectBench can't explain failures)
+7. **Fully autonomous web platform** — upload → verify → results (no other tool has this)
+8. **LLM comparison data** — Claude 100% vs DeepSeek 0% proves commercial LLMs dominate
+9. **Testbench viewer** — users can see exactly what the AI generated
 
 ---
 
@@ -332,37 +411,60 @@ Anthropic API          — $5 credits, key in ~/.zshrc
 - [x] Full web platform (5 pages, Matrix theme, Supabase backend)
 - [x] Supabase database (5 tables, RLS, indexes, data uploaded)
 
-### Done (Session 3 — March 20, 2026)
-- [x] **Fixed Supabase JS bug** — `const supabase` shadowed CDN global, renamed to `sb`
-- [x] **Live reporter** — src/reporter.py pushes real-time status during agent runs
-- [x] **Live page shows completed runs** — latest passing run displayed when idle
-- [x] **Pipeline icons fixed** — replaced emojis with terminal-style glyphs
-- [x] **DeepSeek-Coder-33B benchmark** — Vast.ai RTX 5090, 0/2 designs (Claude wins 100% vs 0%)
-- [x] **Upload page** — paste Verilog + spec, submit for verification, 3 example designs
-- [x] **Agent watcher** — src/watcher.py polls Supabase for pending uploads, runs agent
-- [x] **Fly.io cloud deployment** — watcher runs 24/7 autonomously, no terminal needed
-- [x] **Netlify deployment** — public URL live (astonishing-sorbet-80c3d2.netlify.app)
-- [x] **Supabase Realtime enabled** — runs, iterations, test_results tables
-- [x] **Full end-to-end test** — mux4to1 uploaded via web, watcher picked up, PASS 8/8
-- [x] **test_adder_2 cloud test** — Fly.io watcher processed autonomously, PASS 10/10
-- [x] **10 commits on GitHub**
+### Done (Session 3 — March 20 morning)
+- [x] Fixed Supabase JS bug — `const supabase` shadowed CDN global, renamed to `sb`
+- [x] Live reporter — src/reporter.py pushes real-time status during agent runs
+- [x] Live page shows completed runs — latest passing run displayed when idle
+- [x] Pipeline icons fixed — replaced emojis with terminal-style glyphs
+- [x] DeepSeek-Coder-33B benchmark — Vast.ai RTX 5090, 0/2 designs (Claude 100% vs 0%)
+- [x] Upload page — paste Verilog + spec, submit for verification, 3 example designs
+- [x] Agent watcher — src/watcher.py polls Supabase for pending uploads, runs agent
+- [x] Fly.io cloud deployment — watcher runs 24/7 autonomously, no terminal needed
+- [x] Netlify deployment — public URL live
+- [x] Supabase Realtime enabled — runs, iterations, test_results tables
+- [x] Full end-to-end test — mux4to1 uploaded via web, watcher picked up, PASS 8/8
+- [x] test_adder_2 cloud test — Fly.io watcher processed autonomously, PASS 10/10
+
+### Done (Session 4 — March 20 afternoon)
+- [x] **Full agentic AI investigation** — read all Dr. Wu Slack messages, ACM panel transcript, analyzed his research direction
+- [x] **Research paper analysis** — arXiv:2506.04301 "Cost of Dynamic Reasoning" (HPCA 2026) + 5 more papers on agentic AI infrastructure
+- [x] **Decision: keep Ava separate from infrastructure research** — Ava is verification tool, infrastructure characterization is separate project
+- [x] **Fixed duplicate design name crash** — Upload page now upserts (updates existing design instead of erroring)
+- [x] **Testbench viewer on Live page** — shows AI-generated cocotb code with COPY button and line count
+- [x] **VIEW CODE links** on recent run cards — click to see any run's generated testbench
+- [x] **4 new external designs added** — watchdog (Efabless), traffic light FSM (fpga4student), SPI master (nandland), priority encoder (harishs1313)
+- [x] **All 4 pass: 15/15 designs, 147/147 tests, 100%** — SPI master passed first-try!
+- [x] **__main__.py updated** — reads spec from config.json when spec.txt doesn't exist
+- [x] **UPDATE RLS policy on designs table** — enables upload page upsert
+- [x] **Netlify renamed** — project-ava-ucf.netlify.app (project-ava was taken)
+- [x] **Results uploaded to Supabase** — all 15 designs + runs in database
+- [x] **Fly.io redeployed** — watcher has latest code
+- [x] **Pushed to GitHub** — 12 commits on main
+- [x] **Memory files updated** — project-ava.md + MEMORY.md index
+
+### Done (Session 5 — March 20, 2026 evening)
+- [x] **3 new golden designs** — I2C master (10/10), round-robin arbiter (11/11), SRAM memory controller (14/14)
+- [x] **18/18 designs, 182/182 tests, 100% pass rate** — all 3 new designs self-corrected successfully
+- [x] **API retry with backoff** — llm.py now retries on HTTP 429/529 with exponential backoff (5s, 10s, 20s, 40s, 80s)
+- [x] **claude_cli timeout increased** — 300s → 600s for complex designs (I2C, arbiter)
+- [x] **Results uploaded to Supabase** — all 18 designs in database
+- [x] **PROGRESS.md updated** — session 5 context
 
 ### Next (High Priority)
-- [ ] **Rename Netlify site** to project-ava.netlify.app
 - [ ] **Buy domain** — projectava.dev (~$12/yr), point to Netlify
-- [ ] **Handle duplicate design names** — Upload page should allow same name or auto-suffix
-- [ ] **Clean up Supabase data** — Remove failed DeepSeek runs or mark them properly
-- [ ] **More golden designs** — SPI master, I2C, watchdog timer
+- [ ] **Present to Dr. Wu** — Live demo: upload DVFS controller, watch agent verify, show testbench
+- [ ] **Clean up Supabase data** — Remove or properly mark DeepSeek benchmark failures
 
 ### Research / Paper
-- [ ] **Write up results** — Claude 100% vs DeepSeek 0%, power-aware gap, failure taxonomy
-- [ ] **Present to Dr. Wu** — Working demo: upload DVFS controller, watch it verify live
+- [ ] **Write up results** — 18/18 (100%) vs CorrectBench 70%, power-aware gap, failure taxonomy, Claude vs DeepSeek
 - [ ] **Present to AMD panel** — Live demo on unseen design
+- [ ] **Read agentic AI infrastructure papers** — for Dr. Wu's research direction (separate from Ava)
 
 ### Stretch
 - [ ] **Auto-generate spec from Verilog** — Parse ports, operations, clock/reset
 - [ ] **UPF integration** — Power domain info
 - [ ] **Parallel design execution** — asyncio for faster benchmarks
+- [ ] **Coverage metrics** — toggle, branch, FSM coverage (what verification engineers care about)
 
 ---
 
@@ -373,12 +475,15 @@ Anthropic API          — $5 credits, key in ~/.zshrc
 - **Correction calls 2-5x slower** than generation
 - **Anthropic API same speed as claude -p** — model inference dominates
 - **DeepSeek-Coder-33B: 0% pass rate** — cocotb 2.0 API trap kills open-source LLMs
+- **SPI master passed first-try** — 11 tests, 52s (protocol designs can be easy if spec is clear)
+- **Watchdog and traffic light needed reboots** — timer/FSM designs are harder for LLMs
 
 ### Technical
 - **cocotb 2.0 auto-fixes are essential** — 8 patterns LLMs always get wrong
 - **Icarus Verilog has ZERO UPF support** — but clock gating, DVFS, power FSMs work as plain Verilog
 - **Shift register was hardest** — 660s, 7 iterations, 1 reboot
-- **Self-correction validated** — 6/11 designs needed corrections, all recovered to 100%
+- **Self-correction validated** — 13/18 designs needed corrections, all recovered to 100%
+- **External designs work** — 4 designs from GitHub repos the agent never saw, all pass
 
 ---
 
@@ -410,3 +515,5 @@ Anthropic API          — $5 credits, key in ~/.zshrc
 - **Supabase account:** annecgjackson@gmail.com (NOT halevanthien — that has unpaid invoice)
 - **Fly.io account:** halevanthien@gmail.com (GitHub login)
 - **Netlify account:** halevanthien@gmail.com
+- **Dr. Wu wants agentic AI SYSTEMS research** — how workloads stress hardware (CPU/GPU/memory). Keep this separate from Ava's verification tool purpose.
+- **AMD machine access pending** — ~1 week, for running lit_silicon on AMD GPUs

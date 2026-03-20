@@ -83,7 +83,7 @@ class LLM:
             ["claude", "-p", prompt],
             capture_output=True,
             text=True,
-            timeout=300,
+            timeout=600,
         )
         latency = (time.monotonic() - start) * 1000
 
@@ -129,8 +129,36 @@ class LLM:
         )
 
         start = time.monotonic()
-        with urllib.request.urlopen(req, timeout=300) as resp:
-            data = json.loads(resp.read())
+        # Retry with exponential backoff for rate limits
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                with urllib.request.urlopen(req, timeout=300) as resp:
+                    data = json.loads(resp.read())
+                break
+            except urllib.error.HTTPError as e:
+                if e.code in (429, 529) and attempt < max_retries - 1:
+                    wait = 2 ** attempt * 5  # 5, 10, 20, 40, 80 seconds
+                    print(f"  [llm] Rate limited (HTTP {e.code}), retrying in {wait}s (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait)
+                    # Rebuild request (urlopen consumes it)
+                    req = urllib.request.Request(
+                        "https://api.anthropic.com/v1/messages",
+                        data=payload,
+                        headers={
+                            "Content-Type": "application/json",
+                            "x-api-key": self._api_key,
+                            "anthropic-version": "2023-06-01",
+                        },
+                    )
+                else:
+                    # Read error body for debugging
+                    try:
+                        error_body = e.read().decode("utf-8")
+                        print(f"  [llm] HTTP {e.code} error body: {error_body[:500]}")
+                    except Exception:
+                        pass
+                    raise
         latency = (time.monotonic() - start) * 1000
 
         text = data["content"][0]["text"]

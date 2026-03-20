@@ -42,6 +42,7 @@ class SimResult:
     raw_output: str = ""
     errors: list = field(default_factory=list)
     latency_ms: float = 0.0
+    vcd_path: str = ""
 
     @property
     def fail_messages(self) -> list:
@@ -54,7 +55,7 @@ class Simulator:
         self.sim = sim
 
     def run(self, design_dir, verilog_files, toplevel, test_module,
-            test_file_content=None) -> SimResult:
+            test_file_content=None, dump_vcd=False) -> SimResult:
         """
         Run a cocotb simulation.
 
@@ -93,6 +94,21 @@ class Simulator:
             verilog_sources = " ".join(
                 f"$(shell pwd)/{vf}" for vf in verilog_files
             )
+
+            # VCD dump support
+            if dump_vcd:
+                vcd_wrapper = (
+                    f"`timescale 1ns/1ps\n"
+                    f"module vcd_dump;\n"
+                    f"  initial begin\n"
+                    f'    $dumpfile("dump.vcd");\n'
+                    f"    $dumpvars(0);\n"
+                    f"  end\n"
+                    f"endmodule\n"
+                )
+                (work_dir / "vcd_dump.v").write_text(vcd_wrapper)
+                verilog_sources += " $(shell pwd)/vcd_dump.v"
+
             makefile = (
                 f"TOPLEVEL_LANG = verilog\n"
                 f"VERILOG_SOURCES = {verilog_sources}\n"
@@ -105,19 +121,33 @@ class Simulator:
 
             # Run simulation
             start = time.monotonic()
+            env = os.environ.copy()
+            if dump_vcd:
+                env["COMPILE_ARGS"] = "-s vcd_dump"
             result = subprocess.run(
                 ["make", f"SIM={self.sim}"],
                 capture_output=True,
                 text=True,
                 cwd=str(work_dir),
                 timeout=120,
+                env=env,
             )
             latency = (time.monotonic() - start) * 1000
 
             output = result.stdout + "\n" + result.stderr
 
             # Parse results
-            return self._parse_output(output, latency)
+            sim_result = self._parse_output(output, latency)
+
+            # Copy VCD file out if it was generated
+            if dump_vcd:
+                vcd_file = work_dir / "dump.vcd"
+                if vcd_file.exists():
+                    dest = Path(design_dir) / "dump.vcd"
+                    shutil.copy2(vcd_file, dest)
+                    sim_result.vcd_path = str(dest)
+
+            return sim_result
 
         except subprocess.TimeoutExpired:
             return SimResult(
