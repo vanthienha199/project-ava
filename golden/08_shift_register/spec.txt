@@ -1,0 +1,13 @@
+8-bit shift register with 4 modes controlled by 2-bit mode input:
+- mode 00: Hold current value (no change)
+- mode 01: Shift left — shift data_out left by 1, serial_in enters at LSB
+- mode 10: Shift right — shift data_out right by 1, serial_in enters at MSB
+- mode 11: Parallel load — load parallel_in into data_out
+
+Outputs:
+- data_out[7:0]: current register contents
+- serial_out_msb: always equals data_out[7] (MSB)
+- serial_out_lsb: always equals data_out[0] (LSB)
+
+Active-low asynchronous reset (rst_n) clears data_out to 0.
+All operations are synchronous to rising edge of clk.

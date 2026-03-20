@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Ava // Run Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Share Tech Mono', monospace; background: #000000; color: #00ff00; min-height: 100vh; overflow-x: hidden; }
+        #matrix { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; }
+        .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        header { text-align: center; padding: 30px 0; border-bottom: 1px solid #00ff00; margin-bottom: 30px; background: rgba(0, 0, 0, 0.95); }
+        header h1 { font-size: 3rem; color: #e0ffe0; text-shadow: 0 0 8px #00ff00, 0 0 20px rgba(0, 255, 0, 0.4); margin-bottom: 10px; letter-spacing: 0.15em; }
+        .tagline { font-size: 1rem; color: #00aa00; letter-spacing: 3px; }
+
+        nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; background: rgba(0, 0, 0, 0.95); padding: 15px; border: 1px solid #003300; }
+        nav a { color: #00ff00; text-decoration: none; padding: 12px 25px; border: 1px solid #00ff00; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; background: rgba(0, 0, 0, 0.9); }
+        nav a:hover, nav a.active { color: #000; background: #00ff00; box-shadow: 0 0 20px #00ff00; }
+
+        /* Selector */
+        .selector-section { background: rgba(0, 0, 0, 0.95); border: 1px solid #00ff00; padding: 25px; margin-bottom: 30px; position: relative; }
+        .selector-section::before { content: '// SELECT_RUN'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .selector-section h2 { margin-bottom: 15px; margin-top: 10px; color: #00ff00; font-size: 1.2rem; letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00; }
+        .selector-section select {
+            background: #000; border: 1px solid #00ff00; color: #00ff00; padding: 10px 15px;
+            font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; width: 100%; max-width: 600px;
+        }
+        .selector-section select:focus { outline: none; box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: rgba(0, 255, 0, 0.05); border: 1px solid #00ff00; padding: 20px; text-align: center; position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #00ff00, transparent); animation: scan 2s linear infinite; }
+        @keyframes scan { 0% { left: -100%; } 100% { left: 100%; } }
+        .stat-number { font-size: 2rem; font-weight: bold; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-bottom: 8px; }
+        .stat-label { color: #00aa00; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Code Block */
+        .code-section { background: rgba(0, 0, 0, 0.95); border: 1px solid #00ff00; padding: 25px; margin-bottom: 30px; position: relative; }
+        .code-section::before { content: '// GENERATED_TESTBENCH'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .code-section h2 { margin-bottom: 15px; margin-top: 10px; color: #00ff00; font-size: 1.2rem; letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00; }
+        .code-block { background: rgba(0, 255, 0, 0.03); border: 1px solid #003300; padding: 20px 24px; font-size: 0.8rem; line-height: 1.6; overflow-x: auto; max-height: 500px; overflow-y: auto; white-space: pre; color: #00aa00; tab-size: 4; }
+        .code-block .keyword { color: #00ff00; }
+        .code-block .comment { color: #006600; }
+        .code-block .string { color: #ffaa00; }
+        .code-block .decorator { color: #00aaaa; }
+        .code-block .function { color: #e0ffe0; }
+        .toggle-btn { background: rgba(0,0,0,0.8); border: 1px solid #00aa00; color: #00ff00; padding: 6px 15px; font-family: 'Share Tech Mono', monospace; cursor: pointer; font-size: 0.8rem; margin-bottom: 10px; transition: all 0.3s; }
+        .toggle-btn:hover { background: #00ff00; color: #000; box-shadow: 0 0 10px #00ff00; }
+
+        /* Charts Row */
+        .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .chart-section { background: rgba(0, 0, 0, 0.95); border: 1px solid #00ff00; padding: 25px; position: relative; }
+        .chart-section::before { content: attr(data-label); position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .chart-section h2 { margin-bottom: 20px; margin-top: 10px; color: #00ff00; font-size: 1.1rem; letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00; }
+
+        /* Correction History */
+        .correction-section { background: rgba(0, 0, 0, 0.95); border: 1px solid #ffaa00; padding: 25px; margin-bottom: 30px; position: relative; }
+        .correction-section::before { content: '// CORRECTION_HISTORY'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #665500; }
+        .correction-section h2 { color: #ffaa00; margin-bottom: 15px; margin-top: 10px; padding-left: 20px; border-left: 3px solid #ffaa00; font-size: 1.2rem; letter-spacing: 2px; }
+        .correction-item { background: rgba(255, 170, 0, 0.05); border: 1px solid #333; padding: 15px; margin-bottom: 10px; }
+        .correction-item .iter-label { color: #ffaa00; font-weight: bold; margin-bottom: 8px; }
+        .correction-item .error-msg { color: #ff4444; font-size: 0.85rem; padding: 8px; background: rgba(255, 68, 68, 0.05); border-left: 2px solid #ff4444; margin-top: 8px; }
+        .correction-item .fix-msg { color: #00ff00; font-size: 0.85rem; margin-top: 8px; }
+
+        /* Test Results Table */
+        .test-section { background: rgba(0, 0, 0, 0.95); border: 1px solid #00ff00; padding: 25px; margin-bottom: 30px; position: relative; }
+        .test-section::before { content: '// TEST_RESULTS'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .test-section h2 { margin-bottom: 15px; margin-top: 10px; color: #00ff00; font-size: 1.2rem; letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #002200; }
+        th { color: #00aa00; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; background: rgba(0, 255, 0, 0.05); }
+        td { color: #00aa00; font-size: 0.9rem; }
+        tr:hover td { background: rgba(0, 255, 0, 0.03); }
+        .pass { color: #00ff00; font-weight: bold; text-shadow: 0 0 5px #00ff00; }
+        .fail { color: #ff4444; font-weight: bold; text-shadow: 0 0 5px #ff4444; }
+
+        .loading { color: #006600; font-size: 0.9rem; text-align: center; padding: 40px; animation: blink 1s infinite; }
+        .no-data { color: #006600; font-size: 0.9rem; text-align: center; padding: 40px; }
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+        .hidden { display: none !important; }
+
+        footer { text-align: center; padding: 30px 0; border-top: 1px solid #00ff00; color: #00aa00; font-size: 0.8rem; letter-spacing: 1px; background: rgba(0, 0, 0, 0.95); }
+        footer p { margin-bottom: 5px; }
+        footer a { color: #00ff00; text-decoration: none; }
+        footer a:hover { text-shadow: 0 0 5px #00ff00; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #00ff00; }
+
+        @media (max-width: 1000px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } .charts-row { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { header h1 { font-size: 2rem; } .stats-grid { grid-template-columns: 1fr 1fr; } nav { flex-wrap: wrap; } nav a { flex: 1; text-align: center; min-width: 100px; } }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+    <div class="container">
+        <header>
+            <h1>PROJECT AVA</h1>
+            <p class="tagline">[ AI-Powered Hardware Verification Agent ]</p>
+        </header>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="designs.html">Designs</a>
+            <a href="history.html">History</a>
+            <a href="analyze.html" class="active">Analyze</a>
+            <a href="live.html">Live</a>
+        </nav>
+
+        <main>
+            <!-- Run Selector -->
+            <section class="selector-section">
+                <h2>Select Run to Analyze</h2>
+                <select id="run-selector">
+                    <option value="">-- Select a run --</option>
+                </select>
+            </section>
+
+            <!-- Analysis Content (hidden until run selected) -->
+            <div id="analysis-content" class="hidden">
+                <!-- Stats -->
+                <section class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="a-tests">--</div>
+                        <div class="stat-label">Total Tests</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="a-passed">--</div>
+                        <div class="stat-label">Pass Count</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="a-iters">--</div>
+                        <div class="stat-label">Iterations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="a-corrections">--</div>
+                        <div class="stat-label">Corrections</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="a-latency">--</div>
+                        <div class="stat-label">Total Latency</div>
+                    </div>
+                </section>
+
+                <!-- Charts -->
+                <section class="charts-row">
+                    <div class="chart-section" data-label="// ITERATION_TIMELINE">
+                        <h2>Iteration Timeline</h2>
+                        <canvas id="iterTimelineChart"></canvas>
+                    </div>
+                    <div class="chart-section" data-label="// FAILURE_TAXONOMY">
+                        <h2>Failure Taxonomy</h2>
+                        <canvas id="failureTaxChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Correction History -->
+                <section class="correction-section" id="correction-section" style="display:none;">
+                    <h2>// Self-Correction History</h2>
+                    <div id="correction-list"></div>
+                </section>
+
+                <!-- Testbench Code -->
+                <section class="code-section">
+                    <h2>Generated Testbench</h2>
+                    <button class="toggle-btn" id="toggle-code" onclick="toggleCode()">SHOW CODE</button>
+                    <div class="code-block" id="testbench-code" style="display:none;">No testbench code available</div>
+                </section>
+
+                <!-- Test Results -->
+                <section class="test-section">
+                    <h2>Individual Test Results</h2>
+                    <div id="test-loading" class="loading">[ LOADING TEST RESULTS... ]</div>
+                    <table id="test-table" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th>Test Name</th>
+                                <th>Status</th>
+                                <th>Sim Time (ns)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="test-tbody"></tbody>
+                    </table>
+                    <div id="test-empty" class="no-data" style="display:none;">[ NO INDIVIDUAL TEST DATA ]</div>
+                </section>
+            </div>
+
+            <!-- No run selected message -->
+            <div id="no-run-msg" class="no-data">
+                [ SELECT A RUN FROM THE DROPDOWN ABOVE TO VIEW ANALYSIS ]
+            </div>
+        </main>
+
+        <footer>
+            <p>PROJECT AVA v1.0.0 // AI-Powered Hardware Verification Agent</p>
+            <p>Built by Ha Le // University of Central Florida // Unary Lab (Dr. Di Wu)</p>
+            <p>Supported by AMD Orlando // <a href="https://github.com/vanthienha199/project-ava">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // ── Supabase ──
+        const SUPABASE_URL = 'https://yvpmoyzggbcfaldhsbkl.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2cG1veXpnZ2JjZmFsZGhzYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5Njg5OTMsImV4cCI6MjA4OTU0NDk5M30.qgpE7ayn57SMzeJVgp7mBu3VJ825gTTe8G6OmfTc1b0';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ── Matrix Rain ──
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+        const chars = 'PROJECTAVA01VERILOGCOCOTBDVFSPOWER検証';
+        const charArray = chars.split('');
+        const fontSize = 14;
+        let columns = Math.floor(canvas.width / fontSize);
+        let drops = [];
+        for (let i = 0; i < columns; i++) drops[i] = Math.random() * -100;
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00aa00';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        // ── Chart instances ──
+        let iterChart = null;
+        let failChart = null;
+
+        function toggleCode() {
+            const el = document.getElementById('testbench-code');
+            const btn = document.getElementById('toggle-code');
+            if (el.style.display === 'none') { el.style.display = 'block'; btn.textContent = 'HIDE CODE'; }
+            else { el.style.display = 'none'; btn.textContent = 'SHOW CODE'; }
+        }
+
+        function highlightPython(code) {
+            if (!code) return 'No testbench code available';
+            return code
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/(#.*)/g, '<span class="comment">$1</span>')
+                .replace(/"""[\s\S]*?"""/g, m => '<span class="string">' + m + '</span>')
+                .replace(/('''[\s\S]*?''')/g, '<span class="string">$1</span>')
+                .replace(/('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g, '<span class="string">$1</span>')
+                .replace(/(@\w+)/g, '<span class="decorator">$1</span>')
+                .replace(/\b(import|from|def|class|async|await|if|else|elif|for|while|return|assert|try|except|finally|with|as|raise|pass|break|continue|and|or|not|in|is|None|True|False|yield)\b/g, '<span class="keyword">$1</span>');
+        }
+
+        async function loadRunSelector() {
+            const { data: runs, error } = await sb.from('runs').select('id, design_name, backend, created_at, passed').order('created_at', { ascending: false });
+            if (error) { console.warn('Error loading runs:', error); return; }
+            if (!runs || runs.length === 0) return;
+
+            const sel = document.getElementById('run-selector');
+            // Group by design
+            const groups = {};
+            runs.forEach(r => {
+                const g = r.design_name || 'Unknown';
+                if (!groups[g]) groups[g] = [];
+                groups[g].push(r);
+            });
+
+            Object.keys(groups).sort().forEach(g => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = g;
+                groups[g].forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.id;
+                    const d = new Date(r.created_at);
+                    const status = r.passed ? 'PASS' : 'FAIL';
+                    opt.textContent = `${r.design_name} [${r.backend || '--'}] ${status} - ${d.toLocaleDateString()}`;
+                    optgroup.appendChild(opt);
+                });
+                sel.appendChild(optgroup);
+            });
+
+            // Check URL param
+            const params = new URLSearchParams(window.location.search);
+            const runId = params.get('run');
+            if (runId) {
+                sel.value = runId;
+                loadAnalysis(runId);
+            }
+        }
+
+        async function loadAnalysis(runId) {
+            if (!runId) {
+                document.getElementById('analysis-content').classList.add('hidden');
+                document.getElementById('no-run-msg').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('analysis-content').classList.remove('hidden');
+            document.getElementById('no-run-msg').style.display = 'none';
+
+            // Fetch run, iterations, failures, test_results
+            const [runRes, iterRes, failRes, testRes] = await Promise.all([
+                sb.from('runs').select('*').eq('id', runId).single(),
+                sb.from('iterations').select('*').eq('run_id', runId).order('iteration_number', { ascending: true }),
+                sb.from('failures').select('*').eq('run_id', runId),
+                sb.from('test_results').select('*').eq('run_id', runId).order('test_name', { ascending: true })
+            ]);
+
+            const run = runRes.data;
+            const iterations = iterRes.data || [];
+            const failures = failRes.data || [];
+            const tests = testRes.data || [];
+
+            if (!run) {
+                document.getElementById('analysis-content').innerHTML = '<div class="no-data">[ RUN NOT FOUND ]</div>';
+                return;
+            }
+
+            // Stats
+            document.getElementById('a-tests').textContent = run.total_tests || 0;
+            document.getElementById('a-passed').textContent = run.pass_count || 0;
+            document.getElementById('a-iters').textContent = run.iterations || 1;
+            document.getElementById('a-corrections').textContent = run.corrections || 0;
+            document.getElementById('a-latency').textContent = run.total_latency_ms ? (run.total_latency_ms / 1000).toFixed(1) + 's' : '--';
+
+            // Testbench code
+            document.getElementById('testbench-code').innerHTML = highlightPython(run.testbench_code);
+
+            // Iteration timeline chart
+            if (iterChart) iterChart.destroy();
+            if (iterations.length > 0) {
+                const iterLabels = iterations.map(i => 'Iter ' + i.iteration_number);
+                const passData = iterations.map(i => i.pass_count || 0);
+                const failData = iterations.map(i => i.fail_count || 0);
+                iterChart = new Chart(document.getElementById('iterTimelineChart').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: iterLabels,
+                        datasets: [
+                            { label: 'Passed', data: passData, backgroundColor: '#00ff00', borderColor: '#00ff00', borderWidth: 1 },
+                            { label: 'Failed', data: failData, backgroundColor: '#ff4444', borderColor: '#ff4444', borderWidth: 1 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { labels: { color: '#00ff00', font: { family: "'Share Tech Mono'" } } } },
+                        scales: {
+                            x: { stacked: true, ticks: { color: '#00ff00', font: { family: "'Share Tech Mono'" } }, grid: { color: 'rgba(0,255,0,0.1)' } },
+                            y: { stacked: true, ticks: { color: '#00ff00', font: { family: "'Share Tech Mono'" }, stepSize: 1 }, grid: { color: 'rgba(0,255,0,0.1)' } }
+                        }
+                    }
+                });
+            } else {
+                iterChart = new Chart(document.getElementById('iterTimelineChart').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: ['Iter 1'], datasets: [{ label: 'Passed', data: [run.pass_count || 0], backgroundColor: '#00ff00' }] },
+                    options: { responsive: true, plugins: { legend: { labels: { color: '#006600' } } }, scales: { x: { ticks: { color: '#006600' } }, y: { ticks: { color: '#006600' } } } }
+                });
+            }
+
+            // Failure taxonomy chart
+            if (failChart) failChart.destroy();
+            if (failures.length > 0) {
+                const catMap = {};
+                failures.forEach(f => { const c = f.category || 'UNKNOWN'; catMap[c] = (catMap[c] || 0) + 1; });
+                const catLabels = Object.keys(catMap);
+                const catData = Object.values(catMap);
+                const catColors = catLabels.map(c => {
+                    if (c === 'SYNTAX' || c === 'COMPILE') return '#ff4444';
+                    if (c === 'COCOTB_API') return '#ffaa00';
+                    if (c === 'TIMING') return '#ff8800';
+                    if (c === 'LOGIC') return '#ffaa00';
+                    if (c === 'SIGNAL_ACCESS') return '#ff6600';
+                    return '#006600';
+                });
+                failChart = new Chart(document.getElementById('failureTaxChart').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: catLabels, datasets: [{ label: 'Failures', data: catData, backgroundColor: catColors, borderColor: catColors, borderWidth: 1 }] },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#00ff00', font: { family: "'Share Tech Mono'" }, stepSize: 1 }, grid: { color: 'rgba(0,255,0,0.1)' } },
+                            y: { ticks: { color: '#00ff00', font: { family: "'Share Tech Mono'" } }, grid: { color: 'rgba(0,255,0,0.1)' } }
+                        }
+                    }
+                });
+            } else {
+                failChart = new Chart(document.getElementById('failureTaxChart').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: ['No failures'], datasets: [{ data: [0], backgroundColor: '#006600' }] },
+                    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#006600' } }, y: { ticks: { color: '#006600' } } } }
+                });
+            }
+
+            // Correction history
+            const correctionIters = iterations.filter(i => i.iteration_type === 'correction' || (i.iteration_number > 1));
+            if (correctionIters.length > 0 || (run.corrections && run.corrections > 0)) {
+                document.getElementById('correction-section').style.display = 'block';
+                const list = document.getElementById('correction-list');
+                list.innerHTML = '';
+                if (correctionIters.length > 0) {
+                    correctionIters.forEach(ci => {
+                        const div = document.createElement('div');
+                        div.className = 'correction-item';
+                        const iterFails = failures.filter(f => f.iteration_id === ci.id);
+                        let failHtml = '';
+                        iterFails.forEach(f => {
+                            failHtml += `<div class="error-msg">[${f.category || 'UNKNOWN'}] ${f.summary || 'No details'}</div>`;
+                        });
+                        div.innerHTML = `
+                            <div class="iter-label">Iteration ${ci.iteration_number} (${ci.iteration_type || 'correction'}) — ${ci.passed ? '<span style="color:#00ff00">PASS</span>' : '<span style="color:#ff4444">FAIL</span>'}</div>
+                            <div style="color:#00aa00;font-size:0.85rem;">Pass: ${ci.pass_count || 0} | Fail: ${ci.fail_count || 0} | LLM: ${ci.llm_latency_ms ? (ci.llm_latency_ms / 1000).toFixed(1) + 's' : '--'} | Sim: ${ci.sim_latency_ms ? (ci.sim_latency_ms / 1000).toFixed(1) + 's' : '--'}</div>
+                            ${failHtml}
+                            ${ci.passed ? '<div class="fix-msg">>>> Self-correction successful</div>' : ''}
+                        `;
+                        list.appendChild(div);
+                    });
+                } else {
+                    list.innerHTML = '<div class="correction-item"><div class="iter-label">Run required ' + run.corrections + ' correction(s)</div><div style="color:#00aa00;font-size:0.85rem;">Detailed iteration data not available</div></div>';
+                }
+            } else {
+                document.getElementById('correction-section').style.display = 'none';
+            }
+
+            // Test results table
+            document.getElementById('test-loading').style.display = 'none';
+            if (tests.length > 0) {
+                document.getElementById('test-table').style.display = 'table';
+                document.getElementById('test-empty').style.display = 'none';
+                const tbody = document.getElementById('test-tbody');
+                tbody.innerHTML = '';
+                tests.forEach(t => {
+                    const tr = document.createElement('tr');
+                    const statusClass = (t.status || '').toLowerCase() === 'pass' ? 'pass' : 'fail';
+                    tr.innerHTML = `
+                        <td>${t.test_name || '--'}</td>
+                        <td class="${statusClass}">${(t.status || '--').toUpperCase()}</td>
+                        <td>${t.sim_time_ns != null ? t.sim_time_ns + ' ns' : '--'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                document.getElementById('test-table').style.display = 'none';
+                document.getElementById('test-empty').style.display = 'block';
+            }
+        }
+
+        // ── Events ──
+        document.getElementById('run-selector').addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val) {
+                window.history.replaceState({}, '', '?run=' + val);
+                loadAnalysis(val);
+            } else {
+                window.history.replaceState({}, '', 'analyze.html');
+                document.getElementById('analysis-content').classList.add('hidden');
+                document.getElementById('no-run-msg').style.display = 'block';
+            }
+        });
+
+        loadRunSelector();
+    </script>
+</body>
+</html>

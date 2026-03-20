@@ -1,0 +1,4 @@
+{
+    "toplevel": "uart_tx",
+    "files": ["uart_tx.v"]
+}

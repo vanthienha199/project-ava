@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Ava // Live Agent Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Share Tech Mono', monospace; background: #000000; color: #00ff00; min-height: 100vh; overflow-x: hidden; }
+        #matrix { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; }
+        .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        header { text-align: center; padding: 30px 0; border-bottom: 1px solid #00ff00; margin-bottom: 30px; background: rgba(0, 0, 0, 0.95); }
+        header h1 { font-size: 3rem; color: #e0ffe0; text-shadow: 0 0 8px #00ff00, 0 0 20px rgba(0, 255, 0, 0.4); margin-bottom: 10px; letter-spacing: 0.15em; }
+        .tagline { font-size: 1rem; color: #00aa00; letter-spacing: 3px; }
+
+        nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; background: rgba(0, 0, 0, 0.95); padding: 15px; border: 1px solid #003300; }
+        nav a { color: #00ff00; text-decoration: none; padding: 12px 25px; border: 1px solid #00ff00; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; background: rgba(0, 0, 0, 0.9); }
+        nav a:hover, nav a.active { color: #000; background: #00ff00; box-shadow: 0 0 20px #00ff00; }
+
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+        @keyframes scan { 0% { left: -100%; } 100% { left: 100%; } }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 5px #00ff00; } 50% { box-shadow: 0 0 25px #00ff00, 0 0 50px rgba(0,255,0,0.3); } }
+
+        /* Live Status Banner */
+        .live-banner {
+            background: linear-gradient(135deg, rgba(0, 40, 0, 0.95), rgba(0, 0, 0, 0.98));
+            border: 2px solid #00ff00;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+        }
+        .live-banner::before { content: '// LIVE_AGENT_MONITOR'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .live-banner.active { animation: pulse 2s infinite; border-color: #00ff00; }
+        .live-banner.idle { border-color: #006600; box-shadow: none; }
+
+        .live-indicator { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .live-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .live-dot.active { background: #00ff00; box-shadow: 0 0 10px #00ff00; animation: blink 1s infinite; }
+        .live-dot.idle { background: #006600; }
+        .live-status-text { font-size: 1.5rem; color: #e0ffe0; text-shadow: 0 0 10px rgba(0, 255, 0, 0.5); }
+        .live-design-name { font-size: 2.5rem; color: #00ff00; text-shadow: 0 0 15px #00ff00; margin: 15px 0; }
+        .live-meta { color: #00aa00; font-size: 1rem; }
+
+        /* Progress bar */
+        .progress-section { background: rgba(0, 0, 0, 0.95); border: 1px solid #00ff00; padding: 25px; margin-bottom: 20px; position: relative; }
+        .progress-section::before { content: '// ITERATION_PROGRESS'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .progress-section h2 { margin-bottom: 15px; margin-top: 10px; color: #00ff00; font-size: 1.1rem; letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00; }
+        .progress-bar-container { background: rgba(0, 255, 0, 0.05); border: 1px solid #003300; height: 30px; position: relative; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #006600, #00ff00); transition: width 0.5s; position: relative; }
+        .progress-bar::after { content: ''; position: absolute; top: 0; right: 0; width: 3px; height: 100%; background: #e0ffe0; box-shadow: 0 0 10px #00ff00; animation: blink 0.5s infinite; }
+        .progress-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #e0ffe0; font-size: 0.85rem; z-index: 2; }
+
+        /* Terminal Output */
+        .terminal-section { background: rgba(0, 0, 0, 0.98); border: 1px solid #00ff00; padding: 25px; margin-bottom: 30px; position: relative; }
+        .terminal-section::before { content: '// AGENT_OUTPUT'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .terminal-section h2 { margin-bottom: 15px; margin-top: 10px; color: #00ff00; font-size: 1.1rem; letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00; }
+        .terminal-output {
+            background: #000; border: 1px solid #003300; padding: 20px; font-size: 0.8rem;
+            line-height: 1.6; max-height: 400px; overflow-y: auto; color: #00aa00;
+        }
+        .terminal-output .line-prompt { color: #006600; }
+        .terminal-output .line-info { color: #00aa00; }
+        .terminal-output .line-pass { color: #00ff00; }
+        .terminal-output .line-fail { color: #ff4444; }
+        .terminal-output .line-warn { color: #ffaa00; }
+        .terminal-output .cursor { display: inline-block; width: 8px; height: 14px; background: #00ff00; animation: blink 0.7s infinite; vertical-align: middle; }
+
+        /* Live Test Results */
+        .live-tests { background: rgba(0, 0, 0, 0.95); border: 1px solid #00ff00; padding: 25px; margin-bottom: 30px; position: relative; }
+        .live-tests::before { content: '// LIVE_TEST_RESULTS'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .live-tests h2 { margin-bottom: 15px; margin-top: 10px; color: #00ff00; font-size: 1.1rem; letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00; }
+        .test-result-item { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #002200; font-size: 0.85rem; }
+        .test-result-item .test-name { color: #e0ffe0; }
+        .test-result-item .test-pass { color: #00ff00; font-weight: bold; text-shadow: 0 0 5px #00ff00; }
+        .test-result-item .test-fail { color: #ff4444; font-weight: bold; text-shadow: 0 0 5px #ff4444; }
+
+        /* Recent Runs */
+        .recent-section { background: rgba(0, 0, 0, 0.95); border: 1px solid #00aa00; padding: 25px; margin-bottom: 30px; position: relative; }
+        .recent-section::before { content: '// RECENT_COMPLETED_RUNS'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .recent-section h2 { margin-bottom: 15px; margin-top: 10px; color: #00ff00; font-size: 1.1rem; letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00; }
+        .recent-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .recent-card {
+            background: rgba(0, 255, 0, 0.03); border: 1px solid #003300; padding: 20px;
+            position: relative; overflow: hidden; transition: all 0.3s;
+        }
+        .recent-card:hover { border-color: #00ff00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.2); }
+        .recent-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #00ff00, transparent); animation: scan 2s linear infinite; }
+        .recent-card h3 { color: #e0ffe0; font-size: 1rem; margin-bottom: 8px; }
+        .recent-card .rc-meta { color: #00aa00; font-size: 0.8rem; margin-bottom: 5px; }
+        .recent-card .rc-status { font-weight: bold; font-size: 1rem; }
+        .rc-pass { color: #00ff00; text-shadow: 0 0 5px #00ff00; }
+        .rc-fail { color: #ff4444; text-shadow: 0 0 5px #ff4444; }
+        .recent-card a { color: #00ff00; text-decoration: none; font-size: 0.8rem; border: 1px solid #00ff00; padding: 3px 10px; transition: all 0.3s; display: inline-block; margin-top: 8px; }
+        .recent-card a:hover { background: #00ff00; color: #000; }
+
+        .no-data { color: #006600; font-size: 0.9rem; text-align: center; padding: 40px; }
+
+        footer { text-align: center; padding: 30px 0; border-top: 1px solid #00ff00; color: #00aa00; font-size: 0.8rem; letter-spacing: 1px; background: rgba(0, 0, 0, 0.95); }
+        footer p { margin-bottom: 5px; }
+        footer a { color: #00ff00; text-decoration: none; }
+        footer a:hover { text-shadow: 0 0 5px #00ff00; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #00ff00; }
+
+        @media (max-width: 1000px) { .recent-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { header h1 { font-size: 2rem; } .live-design-name { font-size: 1.8rem; } nav { flex-wrap: wrap; } nav a { flex: 1; text-align: center; min-width: 100px; } }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+    <div class="container">
+        <header>
+            <h1>PROJECT AVA</h1>
+            <p class="tagline">[ AI-Powered Hardware Verification Agent ]</p>
+        </header>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="designs.html">Designs</a>
+            <a href="history.html">History</a>
+            <a href="analyze.html">Analyze</a>
+            <a href="live.html" class="active">Live</a>
+        </nav>
+
+        <main>
+            <!-- Live Status Banner -->
+            <section class="live-banner idle" id="live-banner">
+                <div class="live-indicator">
+                    <span class="live-dot idle" id="live-dot"></span>
+                    <span class="live-status-text" id="live-status">WAITING FOR AGENT...</span>
+                </div>
+                <div class="live-design-name" id="live-design">No Active Run</div>
+                <div class="live-meta" id="live-meta">Start a run with: python3 -m src run --design-dir golden/&lt;design&gt;</div>
+            </section>
+
+            <!-- Progress Bar -->
+            <section class="progress-section" id="progress-section" style="display:none;">
+                <h2>Iteration Progress</h2>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                    <div class="progress-label" id="progress-label">0 / 0</div>
+                </div>
+            </section>
+
+            <!-- Terminal Output -->
+            <section class="terminal-section">
+                <h2>Agent Output</h2>
+                <div class="terminal-output" id="terminal-output">
+                    <div class="line-prompt">$ project-ava agent monitor</div>
+                    <div class="line-info">[SYSTEM] Connecting to Supabase realtime...</div>
+                    <div class="line-info" id="connection-status">[SYSTEM] Waiting for agent activity...</div>
+                    <span class="cursor"></span>
+                </div>
+            </section>
+
+            <!-- Live Test Results -->
+            <section class="live-tests" id="live-tests-section" style="display:none;">
+                <h2>Live Test Results</h2>
+                <div id="live-test-list"></div>
+            </section>
+
+            <!-- Recent Completed Runs -->
+            <section class="recent-section">
+                <h2>Recent Completed Runs</h2>
+                <div class="recent-grid" id="recent-grid">
+                    <div class="no-data" id="recent-empty">[ LOADING RECENT RUNS... ]</div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>PROJECT AVA v1.0.0 // AI-Powered Hardware Verification Agent</p>
+            <p>Built by Ha Le // University of Central Florida // Unary Lab (Dr. Di Wu)</p>
+            <p>Supported by AMD Orlando // <a href="https://github.com/vanthienha199/project-ava">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // ── Supabase ──
+        const SUPABASE_URL = 'https://yvpmoyzggbcfaldhsbkl.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2cG1veXpnZ2JjZmFsZGhzYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5Njg5OTMsImV4cCI6MjA4OTU0NDk5M30.qgpE7ayn57SMzeJVgp7mBu3VJ825gTTe8G6OmfTc1b0';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ── Matrix Rain ──
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+        const chars = 'PROJECTAVA01VERILOGCOCOTBDVFSPOWER検証';
+        const charArray = chars.split('');
+        const fontSize = 14;
+        let columns = Math.floor(canvas.width / fontSize);
+        let drops = [];
+        for (let i = 0; i < columns; i++) drops[i] = Math.random() * -100;
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00aa00';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        // ── Terminal helper ──
+        function addTerminalLine(text, cls = 'line-info') {
+            const output = document.getElementById('terminal-output');
+            const cursor = output.querySelector('.cursor');
+            const div = document.createElement('div');
+            div.className = cls;
+            div.textContent = text;
+            output.insertBefore(div, cursor);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function formatTime(d) {
+            if (!d) return '--';
+            const dt = new Date(d);
+            return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        // ── Active run tracking ──
+        let activeRunId = null;
+        let liveTestResults = [];
+
+        function setActiveState(run) {
+            activeRunId = run.id;
+            const banner = document.getElementById('live-banner');
+            banner.classList.remove('idle');
+            banner.classList.add('active');
+            document.getElementById('live-dot').classList.remove('idle');
+            document.getElementById('live-dot').classList.add('active');
+            document.getElementById('live-status').textContent = 'AGENT RUNNING';
+            document.getElementById('live-design').textContent = run.design_name || 'Unknown Design';
+            document.getElementById('live-meta').textContent = `Backend: ${run.backend || '--'} | Started: ${formatTime(run.created_at)}`;
+
+            document.getElementById('progress-section').style.display = 'block';
+            const maxIters = 10; // max possible
+            const current = run.iterations || 1;
+            const pct = Math.min((current / maxIters) * 100, 100);
+            document.getElementById('progress-bar').style.width = pct + '%';
+            document.getElementById('progress-label').textContent = `Iteration ${current}`;
+
+            document.getElementById('live-tests-section').style.display = 'block';
+            addTerminalLine(`[${formatTime(new Date())}] Agent started: ${run.design_name} (${run.backend})`, 'line-pass');
+        }
+
+        function setIdleState() {
+            activeRunId = null;
+            const banner = document.getElementById('live-banner');
+            banner.classList.remove('active');
+            banner.classList.add('idle');
+            document.getElementById('live-dot').classList.remove('active');
+            document.getElementById('live-dot').classList.add('idle');
+            document.getElementById('live-status').textContent = 'WAITING FOR AGENT...';
+            document.getElementById('live-design').textContent = 'No Active Run';
+            document.getElementById('live-meta').textContent = 'Start a run with: python3 -m src run --design-dir golden/<design>';
+            document.getElementById('progress-section').style.display = 'none';
+        }
+
+        function setCompletedState(run) {
+            const status = run.passed ? 'PASS' : 'FAIL';
+            const cls = run.passed ? 'line-pass' : 'line-fail';
+            addTerminalLine(`[${formatTime(new Date())}] Run completed: ${run.design_name} — ${status} (${run.pass_count || 0}/${run.total_tests || 0} tests)`, cls);
+            setIdleState();
+            loadRecentRuns();
+        }
+
+        function addLiveTestResult(test) {
+            const list = document.getElementById('live-test-list');
+            const div = document.createElement('div');
+            div.className = 'test-result-item';
+            const statusClass = (test.status || '').toLowerCase() === 'pass' ? 'test-pass' : 'test-fail';
+            div.innerHTML = `
+                <span class="test-name">${test.test_name || '--'}</span>
+                <span class="${statusClass}">${(test.status || '--').toUpperCase()}</span>
+            `;
+            list.appendChild(div);
+            addTerminalLine(`  [TEST] ${test.test_name}: ${(test.status || '--').toUpperCase()}`, (test.status || '').toLowerCase() === 'pass' ? 'line-pass' : 'line-fail');
+        }
+
+        // ── Load recent runs ──
+        async function loadRecentRuns() {
+            try {
+                const { data: runs, error } = await sb.from('runs').select('*').order('created_at', { ascending: false }).limit(3);
+                if (error) console.warn('Recent runs error:', error);
+
+                const grid = document.getElementById('recent-grid');
+                grid.innerHTML = '';
+
+                if (!runs || runs.length === 0) {
+                    grid.innerHTML = '<div class="no-data">[ NO COMPLETED RUNS ]</div>';
+                    return;
+                }
+
+                runs.forEach(r => {
+                    const statusClass = r.passed ? 'rc-pass' : 'rc-fail';
+                    const statusText = r.passed ? 'PASS' : 'FAIL';
+                    const latency = r.total_latency_ms ? (r.total_latency_ms / 1000).toFixed(1) + 's' : '--';
+                    const card = document.createElement('div');
+                    card.className = 'recent-card';
+                    card.innerHTML = `
+                        <h3>${r.design_name || 'Unknown'}</h3>
+                        <div class="rc-meta">Backend: ${r.backend || '--'}</div>
+                        <div class="rc-meta">Tests: ${r.pass_count || 0}/${r.total_tests || 0} | Iterations: ${r.iterations || 1} | Time: ${latency}</div>
+                        <div class="rc-status ${statusClass}">${statusText}</div>
+                        <a href="analyze.html?run=${r.id}">ANALYZE</a>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                console.error('Recent runs error:', err);
+            }
+        }
+
+        // ── Supabase Realtime ──
+        function setupRealtime() {
+            addTerminalLine('[SYSTEM] Supabase realtime connected', 'line-pass');
+            document.getElementById('connection-status').textContent = '[SYSTEM] Monitoring for agent activity...';
+
+            // Listen for new/updated runs
+            sb.channel('runs-changes')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'runs' }, (payload) => {
+                    const run = payload.new;
+                    addTerminalLine(`[${formatTime(new Date())}] New run detected: ${run.design_name}`, 'line-warn');
+                    if (!run.passed && run.iterations === 0) {
+                        setActiveState(run);
+                    } else {
+                        setCompletedState(run);
+                    }
+                })
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'runs' }, (payload) => {
+                    const run = payload.new;
+                    if (run.id === activeRunId) {
+                        const current = run.iterations || 1;
+                        const pct = Math.min((current / 10) * 100, 100);
+                        document.getElementById('progress-bar').style.width = pct + '%';
+                        document.getElementById('progress-label').textContent = `Iteration ${current}`;
+                        addTerminalLine(`[${formatTime(new Date())}] Iteration ${current} — Pass: ${run.pass_count || 0} Fail: ${run.fail_count || 0}`, 'line-info');
+
+                        if (run.passed !== null && run.passed !== undefined) {
+                            setCompletedState(run);
+                        }
+                    }
+                })
+                .subscribe();
+
+            // Listen for new iterations
+            sb.channel('iterations-changes')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'iterations' }, (payload) => {
+                    const iter = payload.new;
+                    if (iter.run_id === activeRunId) {
+                        const type = iter.iteration_type || 'initial';
+                        const cls = iter.passed ? 'line-pass' : 'line-warn';
+                        addTerminalLine(`[${formatTime(new Date())}] Iteration ${iter.iteration_number} (${type}): Pass=${iter.pass_count || 0} Fail=${iter.fail_count || 0}`, cls);
+                    }
+                })
+                .subscribe();
+
+            // Listen for test results
+            sb.channel('tests-changes')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'test_results' }, (payload) => {
+                    const test = payload.new;
+                    if (test.run_id === activeRunId) {
+                        addLiveTestResult(test);
+                    }
+                })
+                .subscribe();
+        }
+
+        // ── Init ──
+        loadRecentRuns();
+        setupRealtime();
+    </script>
+</body>
+</html>

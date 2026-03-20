@@ -1,0 +1,4 @@
+{
+    "toplevel": "pwm",
+    "files": ["pwm.v"]
+}

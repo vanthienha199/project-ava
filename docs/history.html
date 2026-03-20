@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Ava // Run History</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Share Tech Mono', monospace; background: #000000; color: #00ff00; min-height: 100vh; overflow-x: hidden; }
+        #matrix { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; }
+        .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        header { text-align: center; padding: 30px 0; border-bottom: 1px solid #00ff00; margin-bottom: 30px; background: rgba(0, 0, 0, 0.95); }
+        header h1 { font-size: 3rem; color: #e0ffe0; text-shadow: 0 0 8px #00ff00, 0 0 20px rgba(0, 255, 0, 0.4); margin-bottom: 10px; letter-spacing: 0.15em; }
+        .tagline { font-size: 1rem; color: #00aa00; letter-spacing: 3px; }
+
+        nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; background: rgba(0, 0, 0, 0.95); padding: 15px; border: 1px solid #003300; }
+        nav a { color: #00ff00; text-decoration: none; padding: 12px 25px; border: 1px solid #00ff00; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; background: rgba(0, 0, 0, 0.9); }
+        nav a:hover, nav a.active { color: #000; background: #00ff00; box-shadow: 0 0 20px #00ff00; }
+
+        /* Stats Row */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: rgba(0, 255, 0, 0.05); border: 1px solid #00ff00; padding: 25px; text-align: center; position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #00ff00, transparent); animation: scan 2s linear infinite; }
+        @keyframes scan { 0% { left: -100%; } 100% { left: 100%; } }
+        .stat-number { font-size: 2.5rem; font-weight: bold; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-bottom: 10px; }
+        .stat-label { color: #00aa00; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Filter bar */
+        .filter-bar { background: rgba(0, 0, 0, 0.95); border: 1px solid #00ff00; padding: 20px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; position: relative; }
+        .filter-bar::before { content: '// FILTERS'; position: absolute; top: 8px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .filter-bar label { color: #00aa00; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 12px; }
+        .filter-bar select, .filter-bar input {
+            background: #000; border: 1px solid #00aa00; color: #00ff00; padding: 8px 12px; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; margin-top: 12px;
+        }
+        .filter-bar select:focus, .filter-bar input:focus { border-color: #00ff00; outline: none; box-shadow: 0 0 10px rgba(0, 255, 0, 0.3); }
+
+        /* Table */
+        .table-section { background: rgba(0, 0, 0, 0.95); border: 1px solid #00ff00; padding: 25px; margin-bottom: 30px; position: relative; }
+        .table-section::before { content: '// RUN_HISTORY'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .table-section h2 { margin-bottom: 20px; margin-top: 10px; color: #00ff00; font-size: 1.2rem; letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #002200; }
+        th { color: #00aa00; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; background: rgba(0, 255, 0, 0.05); cursor: pointer; user-select: none; }
+        th:hover { color: #00ff00; }
+        th .sort-arrow { margin-left: 5px; font-size: 0.7rem; }
+        td { color: #00aa00; font-size: 0.9rem; }
+        tr:hover td { background: rgba(0, 255, 0, 0.03); }
+        .design-name { color: #e0ffe0; font-weight: bold; }
+
+        /* Status badges */
+        .status-pass { color: #00ff00; font-weight: bold; text-shadow: 0 0 8px #00ff00; animation: glowPulse 2s infinite; }
+        .status-fail { color: #ff4444; font-weight: bold; text-shadow: 0 0 8px #ff4444; animation: failPulse 1s infinite; }
+        @keyframes glowPulse { 0%, 100% { text-shadow: 0 0 5px #00ff00; } 50% { text-shadow: 0 0 15px #00ff00, 0 0 25px rgba(0,255,0,0.3); } }
+        @keyframes failPulse { 0%, 100% { text-shadow: 0 0 5px #ff4444; } 50% { text-shadow: 0 0 15px #ff4444, 0 0 25px rgba(255,68,68,0.3); } }
+
+        /* Iteration colors */
+        .iter-1 { color: #00ff00; }
+        .iter-2, .iter-3 { color: #ffaa00; }
+        .iter-4, .iter-5, .iter-6 { color: #ff8800; }
+        .iter-7plus { color: #ff4444; }
+
+        /* Action link */
+        .action-link { color: #00ff00; text-decoration: none; border: 1px solid #00ff00; padding: 4px 10px; font-size: 0.75rem; transition: all 0.3s; }
+        .action-link:hover { background: #00ff00; color: #000; box-shadow: 0 0 10px #00ff00; }
+
+        .loading { color: #006600; font-size: 0.9rem; text-align: center; padding: 40px; animation: blink 1s infinite; }
+        .no-data { color: #006600; font-size: 0.9rem; text-align: center; padding: 40px; }
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+        footer { text-align: center; padding: 30px 0; border-top: 1px solid #00ff00; color: #00aa00; font-size: 0.8rem; letter-spacing: 1px; background: rgba(0, 0, 0, 0.95); }
+        footer p { margin-bottom: 5px; }
+        footer a { color: #00ff00; text-decoration: none; }
+        footer a:hover { text-shadow: 0 0 5px #00ff00; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #00ff00; }
+
+        @media (max-width: 1000px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .filter-bar { flex-direction: column; } }
+        @media (max-width: 600px) { header h1 { font-size: 2rem; } .stats-grid { grid-template-columns: 1fr; } nav { flex-wrap: wrap; } nav a { flex: 1; text-align: center; min-width: 100px; } }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+    <div class="container">
+        <header>
+            <h1>PROJECT AVA</h1>
+            <p class="tagline">[ AI-Powered Hardware Verification Agent ]</p>
+        </header>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="designs.html">Designs</a>
+            <a href="history.html" class="active">History</a>
+            <a href="analyze.html">Analyze</a>
+            <a href="live.html">Live</a>
+        </nav>
+
+        <main>
+            <!-- Stats Row -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="stat-runs">--</div>
+                    <div class="stat-label">Total Runs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="stat-tests">--</div>
+                    <div class="stat-label">Total Tests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="stat-passrate">--</div>
+                    <div class="stat-label">Pass Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="stat-avgiters">--</div>
+                    <div class="stat-label">Avg Iterations</div>
+                </div>
+            </section>
+
+            <!-- Filters -->
+            <div class="filter-bar">
+                <label>Design:</label>
+                <select id="filter-design">
+                    <option value="">All Designs</option>
+                </select>
+                <label>Status:</label>
+                <select id="filter-status">
+                    <option value="">All</option>
+                    <option value="pass">PASS</option>
+                    <option value="fail">FAIL</option>
+                </select>
+                <label>Search:</label>
+                <input type="text" id="filter-search" placeholder="Search runs...">
+            </div>
+
+            <!-- Run History Table -->
+            <section class="table-section">
+                <h2>Run History</h2>
+                <div id="table-loading" class="loading">[ LOADING RUN HISTORY... ]</div>
+                <table id="runs-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th data-sort="design_name">Design <span class="sort-arrow"></span></th>
+                            <th data-sort="backend">Backend <span class="sort-arrow"></span></th>
+                            <th data-sort="total_tests">Tests <span class="sort-arrow"></span></th>
+                            <th data-sort="iterations">Iterations <span class="sort-arrow"></span></th>
+                            <th data-sort="total_latency_ms">Time <span class="sort-arrow"></span></th>
+                            <th data-sort="passed">Status <span class="sort-arrow"></span></th>
+                            <th data-sort="created_at">Date <span class="sort-arrow"></span></th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="runs-tbody"></tbody>
+                </table>
+                <div id="table-empty" class="no-data" style="display:none;">[ NO RUNS FOUND ]</div>
+            </section>
+        </main>
+
+        <footer>
+            <p>PROJECT AVA v1.0.0 // AI-Powered Hardware Verification Agent</p>
+            <p>Built by Ha Le // University of Central Florida // Unary Lab (Dr. Di Wu)</p>
+            <p>Supported by AMD Orlando // <a href="https://github.com/vanthienha199/project-ava">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // ── Supabase ──
+        const SUPABASE_URL = 'https://yvpmoyzggbcfaldhsbkl.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2cG1veXpnZ2JjZmFsZGhzYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5Njg5OTMsImV4cCI6MjA4OTU0NDk5M30.qgpE7ayn57SMzeJVgp7mBu3VJ825gTTe8G6OmfTc1b0';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ── Matrix Rain ──
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+        const chars = 'PROJECTAVA01VERILOGCOCOTBDVFSPOWER検証';
+        const charArray = chars.split('');
+        const fontSize = 14;
+        let columns = Math.floor(canvas.width / fontSize);
+        let drops = [];
+        for (let i = 0; i < columns; i++) drops[i] = Math.random() * -100;
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00aa00';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        // ── State ──
+        let allRuns = [];
+        let sortCol = 'created_at';
+        let sortAsc = false;
+
+        function iterClass(n) {
+            if (n <= 1) return 'iter-1';
+            if (n <= 3) return 'iter-2';
+            if (n <= 6) return 'iter-4';
+            return 'iter-7plus';
+        }
+
+        function formatDate(d) {
+            if (!d) return '--';
+            const dt = new Date(d);
+            return dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderTable() {
+            const designFilter = document.getElementById('filter-design').value;
+            const statusFilter = document.getElementById('filter-status').value;
+            const search = document.getElementById('filter-search').value.toLowerCase();
+
+            let filtered = allRuns.filter(r => {
+                if (designFilter && (r.design_name || '') !== designFilter) return false;
+                if (statusFilter === 'pass' && !r.passed) return false;
+                if (statusFilter === 'fail' && r.passed) return false;
+                if (search && !(r.design_name || '').toLowerCase().includes(search) && !(r.backend || '').toLowerCase().includes(search)) return false;
+                return true;
+            });
+
+            // Sort
+            filtered.sort((a, b) => {
+                let va = a[sortCol], vb = b[sortCol];
+                if (typeof va === 'string') va = va.toLowerCase();
+                if (typeof vb === 'string') vb = vb.toLowerCase();
+                if (va < vb) return sortAsc ? -1 : 1;
+                if (va > vb) return sortAsc ? 1 : -1;
+                return 0;
+            });
+
+            const tbody = document.getElementById('runs-tbody');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                document.getElementById('runs-table').style.display = 'none';
+                document.getElementById('table-empty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('runs-table').style.display = 'table';
+            document.getElementById('table-empty').style.display = 'none';
+
+            filtered.forEach(r => {
+                const latency = r.total_latency_ms ? (r.total_latency_ms / 1000).toFixed(1) + 's' : '--';
+                const statusClass = r.passed ? 'status-pass' : 'status-fail';
+                const statusText = r.passed ? 'PASS' : 'FAIL';
+                const iters = r.iterations || 1;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="design-name">${r.design_name || 'Unknown'}</td>
+                    <td>${r.backend || '--'}</td>
+                    <td>${r.pass_count || 0}/${r.total_tests || 0}</td>
+                    <td class="${iterClass(iters)}">${iters}</td>
+                    <td>${latency}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                    <td>${formatDate(r.created_at)}</td>
+                    <td><a href="analyze.html?run=${r.id}" class="action-link">ANALYZE</a></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadHistory() {
+            try {
+                const { data: runs, error } = await supabase.from('runs').select('*').order('created_at', { ascending: false });
+                if (error) console.warn('Supabase error:', error);
+                allRuns = runs || [];
+
+                document.getElementById('table-loading').style.display = 'none';
+
+                if (allRuns.length === 0) {
+                    document.getElementById('table-empty').style.display = 'block';
+                    ['stat-runs','stat-tests','stat-passrate','stat-avgiters'].forEach(id => document.getElementById(id).textContent = '0');
+                    return;
+                }
+
+                // Stats
+                const totalRuns = allRuns.length;
+                const totalTests = allRuns.reduce((s, r) => s + (r.total_tests || 0), 0);
+                const totalPassed = allRuns.reduce((s, r) => s + (r.pass_count || 0), 0);
+                const passRate = totalTests > 0 ? Math.round((totalPassed / totalTests) * 100) : 0;
+                const avgIters = (allRuns.reduce((s, r) => s + (r.iterations || 1), 0) / totalRuns).toFixed(1);
+
+                document.getElementById('stat-runs').textContent = totalRuns;
+                document.getElementById('stat-tests').textContent = totalTests;
+                document.getElementById('stat-passrate').textContent = passRate + '%';
+                document.getElementById('stat-avgiters').textContent = avgIters;
+
+                // Populate design filter
+                const designs = [...new Set(allRuns.map(r => r.design_name).filter(Boolean))].sort();
+                const sel = document.getElementById('filter-design');
+                designs.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d; opt.textContent = d;
+                    sel.appendChild(opt);
+                });
+
+                renderTable();
+            } catch (err) {
+                console.error('History load error:', err);
+                document.getElementById('table-loading').style.display = 'none';
+                document.getElementById('table-empty').style.display = 'block';
+                document.getElementById('table-empty').textContent = '[ ERROR: ' + err.message + ' ]';
+            }
+        }
+
+        // ── Sort headers ──
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                const col = th.dataset.sort;
+                if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+                renderTable();
+            });
+        });
+
+        // ── Filters ──
+        document.getElementById('filter-design').addEventListener('change', renderTable);
+        document.getElementById('filter-status').addEventListener('change', renderTable);
+        document.getElementById('filter-search').addEventListener('input', renderTable);
+
+        loadHistory();
+    </script>
+</body>
+</html>

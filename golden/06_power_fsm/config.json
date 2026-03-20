@@ -1,0 +1,4 @@
+{
+    "toplevel": "power_fsm",
+    "files": ["power_fsm.v"]
+}

@@ -1,0 +1,4 @@
+{
+    "toplevel": "freq_divider",
+    "files": ["freq_divider.v"]
+}

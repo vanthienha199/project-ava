@@ -1,0 +1,4 @@
+{
+    "toplevel": "fifo",
+    "files": ["fifo.v"]
+}

@@ -1,0 +1,4 @@
+{
+    "toplevel": "dvfs_controller",
+    "files": ["dvfs_controller.v"]
+}

@@ -1,0 +1,4 @@
+{
+    "toplevel": "alu",
+    "files": ["alu.v"]
+}

@@ -46,7 +46,10 @@ class Corrector:
         """Load correction prompt template and fill in all fields."""
         template_path = PROMPTS_DIR / f"{self.prompt_version}_correct.txt"
         template = template_path.read_text()
+        # Truncate errors to avoid massive correction prompts
         error_text = "\n".join(errors) if errors else "No specific error messages captured."
+        if len(error_text) > 2000:
+            error_text = error_text[:2000] + "\n... (truncated)"
         return template.format(
             verilog_source=verilog_source,
             spec=spec,

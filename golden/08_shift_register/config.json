@@ -1,0 +1,4 @@
+{
+    "toplevel": "shift_register",
+    "files": ["shift_register.v"]
+}

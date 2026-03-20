@@ -1,0 +1,4 @@
+{
+    "toplevel": "counter",
+    "files": ["counter.v"]
+}

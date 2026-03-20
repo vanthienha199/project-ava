@@ -1,0 +1,4 @@
+{
+    "toplevel": "adder",
+    "files": ["adder.v"]
+}

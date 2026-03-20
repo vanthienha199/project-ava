@@ -58,13 +58,14 @@ class LLM:
             self.model = model or "claude-cli"
         elif backend == "anthropic_api":
             self.model = model or "claude-sonnet-4-20250514"
+            self._api_key = None  # cached on first use
         elif backend == "ollama":
             self.model = model or "deepseek-coder:6.7b"
             self.base_url = base_url or "http://localhost:11434"
         else:
             raise ValueError(f"Unknown backend: {backend}")
 
-    def generate(self, prompt, temperature=0.0, max_tokens=4096) -> LLMResponse:
+    def generate(self, prompt, temperature=0.0, max_tokens=8192) -> LLMResponse:
         """Send prompt to LLM, return structured response."""
         if self.backend == "claude_cli":
             return self._call_claude_cli(prompt)
@@ -82,7 +83,7 @@ class LLM:
             ["claude", "-p", prompt],
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=300,
         )
         latency = (time.monotonic() - start) * 1000
 
@@ -102,8 +103,9 @@ class LLM:
         """Call Anthropic API directly via urllib (no SDK dependency)."""
         import os
 
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if not api_key:
+        if not self._api_key:
+            self._api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not self._api_key:
             raise RuntimeError(
                 "ANTHROPIC_API_KEY not set. "
                 "Export it or use backend='claude_cli' instead."
@@ -121,13 +123,13 @@ class LLM:
             data=payload,
             headers={
                 "Content-Type": "application/json",
-                "x-api-key": api_key,
+                "x-api-key": self._api_key,
                 "anthropic-version": "2023-06-01",
             },
         )
 
         start = time.monotonic()
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=300) as resp:
             data = json.loads(resp.read())
         latency = (time.monotonic() - start) * 1000
 

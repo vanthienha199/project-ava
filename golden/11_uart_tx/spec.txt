@@ -1,0 +1,30 @@
+UART transmitter implementing 8N1 serial protocol (8 data bits, no parity, 1 stop bit).
+Parameter CLKS_PER_BIT controls baud rate (default 4 for simulation).
+
+Inputs:
+- clk: system clock
+- rst_n: active-low asynchronous reset
+- tx_start: pulse high for 1 clock to begin transmitting tx_data
+- tx_data[7:0]: byte to transmit (latched when tx_start is asserted)
+
+Outputs:
+- tx_out: serial output line, idle high (1). Start bit = 0, then 8 data bits LSB first, then stop bit = 1.
+- tx_busy: high while a transmission is in progress
+- tx_done: pulses high for 1 clock cycle when transmission completes
+
+Behavior:
+- After reset: tx_out=1 (idle), tx_busy=0, tx_done=0
+- When tx_start pulsed: tx_busy goes high, transmission begins
+- Transmission frame (each bit lasts CLKS_PER_BIT=4 clock cycles):
+  Bit 0 (start): tx_out=0 for 4 cycles
+  Bits 1-8 (data): tx_out=tx_data[0] for 4 cycles, then tx_data[1] for 4 cycles, ..., tx_data[7] for 4 cycles (LSB first)
+  Bit 9 (stop): tx_out=1 for 4 cycles
+- tx_done pulses high for 1 cycle at end of stop bit
+- tx_busy goes low when tx_done pulses
+- Total frame: 10 bits * 4 cycles = 40 clock cycles
+
+Testing strategy:
+- To verify serial output: after asserting tx_start for 1 cycle, wait CLKS_PER_BIT/2 cycles (2 cycles) to sample mid-bit, then check tx_out every CLKS_PER_BIT (4) cycles for each bit in the frame
+- Verify tx_busy stays high during entire transmission
+- Verify tx_done pulses exactly once at end
+- tx_start is ignored while tx_busy is high

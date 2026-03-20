@@ -195,21 +195,31 @@ class Agent:
             if ic < IC_MAX:
                 # Correction attempt
                 ic += 1
-                gen_result = self.corrector.correct(
-                    verilog_source, spec, current_code, errors,
-                )
-                current_code = gen_result.code
-                total_tokens_in += gen_result.llm_response.tokens_in
-                total_tokens_out += gen_result.llm_response.tokens_out
+                try:
+                    gen_result = self.corrector.correct(
+                        verilog_source, spec, current_code, errors,
+                    )
+                    current_code = gen_result.code
+                    total_tokens_in += gen_result.llm_response.tokens_in
+                    total_tokens_out += gen_result.llm_response.tokens_out
+                except Exception as e:
+                    # LLM timeout or error during correction — force reboot
+                    print(f"  [agent] Correction failed ({e.__class__.__name__}), forcing reboot")
+                    ic = IC_MAX  # Skip remaining corrections
+                    continue
 
             elif ir < IR_MAX:
                 # Reboot — fresh generation
                 ir += 1
                 ic = 0
-                gen_result = self.generator.generate(verilog_source, spec)
-                current_code = gen_result.code
-                total_tokens_in += gen_result.llm_response.tokens_in
-                total_tokens_out += gen_result.llm_response.tokens_out
+                try:
+                    gen_result = self.generator.generate(verilog_source, spec)
+                    current_code = gen_result.code
+                    total_tokens_in += gen_result.llm_response.tokens_in
+                    total_tokens_out += gen_result.llm_response.tokens_out
+                except Exception as e:
+                    print(f"  [agent] Generation failed ({e.__class__.__name__}), retrying")
+                    continue
 
             else:
                 # Max iterations reached — give up

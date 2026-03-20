@@ -1,0 +1,22 @@
+Synchronous FIFO buffer with 8-bit data width and 8 entries deep.
+
+Inputs:
+- clk: clock
+- rst_n: active-low asynchronous reset
+- wr_en: write enable — writes wr_data to FIFO when high and FIFO is not full
+- rd_en: read enable — reads next entry to rd_data when high and FIFO is not empty
+- wr_data[7:0]: data to write
+
+Outputs:
+- rd_data[7:0]: data read from FIFO (updates on read)
+- full: high when FIFO contains 8 entries
+- empty: high when FIFO contains 0 entries
+- count[3:0]: number of entries currently in the FIFO (0 to 8)
+
+Behavior:
+- Write when wr_en=1 and not full: stores wr_data, increments count
+- Read when rd_en=1 and not empty: outputs oldest entry to rd_data, decrements count
+- Simultaneous read+write: both happen, count unchanged
+- Write when full is ignored. Read when empty is ignored.
+- Reset clears all pointers and count to 0.
+- FIFO order is first-in first-out.
