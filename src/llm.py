@@ -77,10 +77,11 @@ class LLM:
             raise ValueError(f"Unknown backend: {self.backend}")
 
     def _call_claude_cli(self, prompt) -> LLMResponse:
-        """Call claude -p via subprocess."""
+        """Call claude -p via subprocess, piping prompt through stdin."""
         start = time.monotonic()
         result = subprocess.run(
-            ["claude", "-p", prompt],
+            ["claude", "-p"],
+            input=prompt,
             capture_output=True,
             text=True,
             timeout=600,
