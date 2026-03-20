@@ -28,8 +28,16 @@ def run_single(args):
         design_dir = Path(args.design_dir)
         verilog_files = [f.name for f in design_dir.glob("*.v")]
         spec_file = design_dir / "spec.txt"
-        spec = spec_file.read_text() if spec_file.exists() else args.spec
-        toplevel = args.toplevel or verilog_files[0].replace(".v", "")
+        config_file = design_dir / "config.json"
+        config = json.loads(config_file.read_text()) if config_file.exists() else {}
+        if spec_file.exists():
+            spec = spec_file.read_text()
+        elif config.get("spec"):
+            spec = config["spec"]
+        else:
+            spec = args.spec
+        toplevel = args.toplevel or config.get("toplevel") or verilog_files[0].replace(".v", "")
+        verilog_files = config.get("files", verilog_files)
     else:
         design_dir = Path(args.design).parent
         verilog_files = [Path(args.design).name]
@@ -86,24 +94,26 @@ def run_benchmark(args):
         if not design_path.is_dir():
             continue
 
-        spec_file = design_path / "spec.txt"
-        if not spec_file.exists():
-            continue
-
         verilog_files = [f.name for f in design_path.glob("*.v")]
         if not verilog_files:
             continue
 
-        spec = spec_file.read_text()
-
-        # Determine toplevel from config or first file
+        # Read config and spec
         config_file = design_path / "config.json"
+        spec_file = design_path / "spec.txt"
+        config = {}
         if config_file.exists():
             config = json.loads(config_file.read_text())
-            toplevel = config.get("toplevel", verilog_files[0].replace(".v", ""))
-            verilog_files = config.get("files", verilog_files)
+
+        if spec_file.exists():
+            spec = spec_file.read_text()
+        elif config.get("spec"):
+            spec = config["spec"]
         else:
-            toplevel = verilog_files[0].replace(".v", "")
+            continue
+
+        toplevel = config.get("toplevel", verilog_files[0].replace(".v", ""))
+        verilog_files = config.get("files", verilog_files)
 
         print(f"\n{'='*60}")
         print(f"Running: {design_path.name}")

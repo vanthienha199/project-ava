@@ -1,0 +1,5 @@
+{
+    "toplevel": "watchdog_timer",
+    "files": ["watchdog_timer.v"],
+    "spec": "Watchdog timer with 32-bit countdown, kick (reload), and timeout detection.\n\nInputs:\n- clk: system clock\n- rst_n: active-low asynchronous reset\n- enable: when high, countdown is active; when low, counter holds at load_val\n- kick: pulse high for 1 cycle to reload the counter with load_val (pet the watchdog)\n- load_val[31:0]: the value loaded into the counter on kick, timeout, or when disabled\n\nOutputs:\n- count[31:0]: current value of the countdown timer\n- timeout: high when counter reaches 0 and enable is high\n\nBehavior:\n- After reset: count = 0\n- When enable is low: count is continuously loaded with load_val (counter does not run)\n- When enable goes high: counter decrements by 1 each clock cycle\n- When kick is pulsed high: counter reloads to load_val immediately\n- When counter reaches 0 (timeout): timeout goes high, counter auto-reloads to load_val\n- Priority: reset > disable > kick > timeout > decrement\n\nVerify: reset state, disabled behavior, countdown, kick reload, timeout detection, auto-reload after timeout, kick during countdown."
+}

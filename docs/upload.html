@@ -560,21 +560,41 @@ Test: reset state, each temperature/workload zone, priority (high temp + high wo
             setStep(2);
 
             try {
-                // 1. Insert design into Supabase
-                const { data: design, error: dErr } = await sb
-                    .from('designs')
-                    .insert({
-                        name: name,
-                        category: category,
-                        toplevel: toplevel,
-                        verilog_source: verilog,
-                        spec: spec,
-                        files: [name + '.v'],
-                    })
-                    .select()
-                    .single();
-
-                if (dErr) throw dErr;
+                // 1. Insert or update design in Supabase (handle duplicate names)
+                let design;
+                const { data: existing } = await sb.from('designs').select('id').eq('name', name).limit(1);
+                if (existing && existing.length > 0) {
+                    // Update existing design with new source/spec
+                    const { data: updated, error: uErr } = await sb
+                        .from('designs')
+                        .update({
+                            category: category,
+                            toplevel: toplevel,
+                            verilog_source: verilog,
+                            spec: spec,
+                            files: [name + '.v'],
+                        })
+                        .eq('id', existing[0].id)
+                        .select()
+                        .single();
+                    if (uErr) throw uErr;
+                    design = updated;
+                } else {
+                    const { data: inserted, error: dErr } = await sb
+                        .from('designs')
+                        .insert({
+                            name: name,
+                            category: category,
+                            toplevel: toplevel,
+                            verilog_source: verilog,
+                            spec: spec,
+                            files: [name + '.v'],
+                        })
+                        .select()
+                        .single();
+                    if (dErr) throw dErr;
+                    design = inserted;
+                }
 
                 // 2. Insert a pending run
                 const { data: run, error: rErr } = await sb

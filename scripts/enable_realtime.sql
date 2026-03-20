@@ -8,3 +8,6 @@ ALTER PUBLICATION supabase_realtime ADD TABLE test_results;
 
 -- 2. Allow anonymous UPDATE on runs (reporter needs to PATCH running rows)
 CREATE POLICY "anon_update_runs" ON runs FOR UPDATE TO anon USING (true) WITH CHECK (true);
+
+-- 3. Allow anonymous UPDATE on designs (upload page updates existing designs)
+CREATE POLICY "anon_update_designs" ON designs FOR UPDATE TO anon USING (true) WITH CHECK (true);
