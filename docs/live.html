@@ -292,7 +292,18 @@
         // ── Load recent runs ──
         async function loadRecentRuns() {
             try {
-                const { data: runs, error } = await sb.from('runs').select('*').order('created_at', { ascending: false }).limit(3);
+                const { data: allRuns, error } = await sb.from('runs').select('*').order('created_at', { ascending: false });
+                // Deduplicate: latest per design, prefer passed runs
+                const seen = {};
+                const runs = [];
+                for (const r of (allRuns || [])) {
+                    if (!seen[r.design_name]) {
+                        seen[r.design_name] = true;
+                        runs.push(r);
+                    }
+                }
+                runs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                runs.splice(6); // show up to 6
                 if (error) console.warn('Recent runs error:', error);
 
                 const grid = document.getElementById('recent-grid');
@@ -381,8 +392,47 @@
                 .subscribe();
         }
 
+        // ── Show latest run in banner when idle ──
+        async function showLastRun() {
+            try {
+                const { data: runs } = await sb.from('runs').select('*').eq('passed', true).order('created_at', { ascending: false }).limit(1);
+                if (!runs || runs.length === 0) return;
+                const run = runs[0];
+                const status = run.passed ? 'PASS' : 'FAIL';
+                const latency = run.total_latency_ms ? (run.total_latency_ms / 1000).toFixed(1) + 's' : '--';
+                document.getElementById('live-status').textContent = 'LAST RUN COMPLETED';
+                document.getElementById('live-design').textContent = run.design_name || 'Unknown';
+                document.getElementById('live-meta').textContent = `${status} | ${run.pass_count || 0}/${run.total_tests || 0} tests | ${run.iterations || 1} iterations | ${latency} | ${run.backend || '--'}`;
+
+                // Show progress bar at 100% for completed run
+                document.getElementById('progress-section').style.display = 'block';
+                document.getElementById('progress-bar').style.width = '100%';
+                document.getElementById('progress-label').textContent = `${status} — ${run.pass_count || 0}/${run.total_tests || 0} tests`;
+
+                // Load test results for this run
+                const { data: tests } = await sb.from('test_results').select('*').eq('run_id', run.id);
+                if (tests && tests.length > 0) {
+                    document.getElementById('live-tests-section').style.display = 'block';
+                    const list = document.getElementById('live-test-list');
+                    list.innerHTML = '';
+                    tests.forEach(t => {
+                        const div = document.createElement('div');
+                        div.className = 'test-result-item';
+                        const cls = (t.status || '').toLowerCase() === 'pass' ? 'test-pass' : 'test-fail';
+                        div.innerHTML = `<span class="test-name">${t.test_name || '--'}</span><span class="${cls}">${(t.status || '--').toUpperCase()}</span>`;
+                        list.appendChild(div);
+                    });
+                }
+
+                addTerminalLine(`[SYSTEM] Last run: ${run.design_name} — ${status} (${run.pass_count || 0}/${run.total_tests || 0})`, run.passed ? 'line-pass' : 'line-fail');
+            } catch (err) {
+                console.warn('Failed to load last run:', err);
+            }
+        }
+
         // ── Init ──
         loadRecentRuns();
+        showLastRun();
         setupRealtime();
     </script>
 </body>
