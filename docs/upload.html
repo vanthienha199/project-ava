@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Ava // Upload & Verify</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Share Tech Mono', monospace; background: #000000; color: #00ff00; min-height: 100vh; overflow-x: hidden; }
+        #matrix { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; }
+        .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        header { text-align: center; padding: 30px 0; border-bottom: 1px solid #00ff00; margin-bottom: 30px; background: rgba(0, 0, 0, 0.95); }
+        header h1 { font-size: 3rem; color: #e0ffe0; text-shadow: 0 0 8px #00ff00, 0 0 20px rgba(0, 255, 0, 0.4); margin-bottom: 10px; letter-spacing: 0.15em; }
+        .tagline { font-size: 1rem; color: #00aa00; letter-spacing: 3px; }
+
+        nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; background: rgba(0, 0, 0, 0.95); padding: 15px; border: 1px solid #003300; }
+        nav a { color: #00ff00; text-decoration: none; padding: 12px 25px; border: 1px solid #00ff00; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; background: rgba(0, 0, 0, 0.9); }
+        nav a:hover, nav a.active { color: #000; background: #00ff00; box-shadow: 0 0 20px #00ff00; }
+
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+        @keyframes scan { 0% { left: -100%; } 100% { left: 100%; } }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 5px #00ff00; } 50% { box-shadow: 0 0 25px #00ff00, 0 0 50px rgba(0,255,0,0.3); } }
+
+        /* Upload Section */
+        .upload-hero {
+            background: linear-gradient(135deg, rgba(0, 40, 0, 0.95), rgba(0, 0, 0, 0.98));
+            border: 2px solid #00ff00;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+        }
+        .upload-hero::before { content: '// UPLOAD_AND_VERIFY'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .upload-hero h2 { font-size: 1.8rem; color: #e0ffe0; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0, 255, 0, 0.5); }
+        .upload-hero p { color: #00aa00; font-size: 1rem; max-width: 700px; margin: 0 auto; line-height: 1.6; }
+
+        /* Steps */
+        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .step-card { background: rgba(0, 255, 0, 0.03); border: 1px solid #003300; padding: 20px; text-align: center; position: relative; }
+        .step-card.active { border-color: #00ff00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
+        .step-card .step-num { font-size: 2rem; color: #00ff00; margin-bottom: 8px; }
+        .step-card h3 { color: #e0ffe0; font-size: 0.95rem; margin-bottom: 5px; }
+        .step-card p { color: #006600; font-size: 0.8rem; }
+        .step-card.active p { color: #00aa00; }
+
+        /* Form */
+        .form-section {
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid #00ff00;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .form-section::before { content: attr(data-label); position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .form-section h2 {
+            margin-bottom: 20px; margin-top: 10px; color: #00ff00; font-size: 1.2rem;
+            letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #00aa00; font-size: 0.85rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .form-group input, .form-group select {
+            width: 100%; background: rgba(0, 255, 0, 0.03); border: 1px solid #00aa00; color: #00ff00;
+            padding: 12px 15px; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: #00ff00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+        .form-group textarea {
+            width: 100%; background: rgba(0, 255, 0, 0.03); border: 1px solid #00aa00; color: #00ff00;
+            padding: 15px; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem;
+            min-height: 200px; resize: vertical; line-height: 1.5;
+        }
+        .form-group .hint { color: #006600; font-size: 0.75rem; margin-top: 5px; }
+
+        /* Drop zone */
+        .drop-zone {
+            border: 2px dashed #00aa00; padding: 40px; text-align: center; cursor: pointer;
+            transition: all 0.3s; background: rgba(0, 255, 0, 0.02); margin-bottom: 10px;
+        }
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: #00ff00; background: rgba(0, 255, 0, 0.08); box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+        .drop-zone .icon { font-size: 2rem; margin-bottom: 10px; color: #00aa00; }
+        .drop-zone p { color: #00aa00; font-size: 0.9rem; }
+        .drop-zone .sub { color: #006600; font-size: 0.75rem; margin-top: 5px; }
+
+        /* Preview */
+        .preview-section {
+            background: rgba(0, 0, 0, 0.98); border: 1px solid #003300; padding: 20px;
+            margin-bottom: 20px; display: none; max-height: 300px; overflow-y: auto;
+        }
+        .preview-section h3 { color: #00aa00; margin-bottom: 10px; font-size: 0.9rem; }
+        .preview-section pre { color: #00ff00; font-size: 0.8rem; line-height: 1.4; white-space: pre-wrap; }
+
+        /* Buttons */
+        .btn-row { display: flex; gap: 15px; margin-top: 20px; }
+        .btn {
+            padding: 15px 40px; font-family: 'Share Tech Mono', monospace; font-size: 1rem;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s;
+            border: none;
+        }
+        .btn-primary {
+            background: #00ff00; color: #000; border: 2px solid #00ff00;
+        }
+        .btn-primary:hover { box-shadow: 0 0 30px #00ff00; }
+        .btn-primary:disabled { background: #003300; color: #006600; border-color: #003300; cursor: not-allowed; box-shadow: none; }
+        .btn-secondary {
+            background: transparent; color: #00ff00; border: 2px solid #00ff00;
+        }
+        .btn-secondary:hover { background: rgba(0, 255, 0, 0.1); }
+
+        /* Status messages */
+        .status-msg {
+            padding: 15px 20px; margin-top: 20px; font-size: 0.9rem; display: none;
+            border-left: 3px solid;
+        }
+        .status-msg.loading { color: #ffaa00; border-color: #ffaa00; background: rgba(255, 170, 0, 0.05); display: block; }
+        .status-msg.success { color: #00ff00; border-color: #00ff00; background: rgba(0, 255, 0, 0.05); display: block; }
+        .status-msg.error { color: #ff4444; border-color: #ff4444; background: rgba(255, 68, 68, 0.05); display: block; }
+
+        /* Example designs */
+        .examples-section {
+            background: rgba(0, 0, 0, 0.95); border: 1px solid #00aa00; padding: 25px;
+            margin-bottom: 30px; position: relative;
+        }
+        .examples-section::before { content: '// EXAMPLE_DESIGNS'; position: absolute; top: 10px; left: 15px; font-size: 0.7rem; color: #006600; }
+        .examples-section h2 {
+            margin-bottom: 15px; margin-top: 10px; color: #00ff00; font-size: 1.1rem;
+            letter-spacing: 2px; padding-left: 20px; border-left: 3px solid #00ff00;
+        }
+        .example-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .example-card {
+            background: rgba(0, 255, 0, 0.03); border: 1px solid #003300; padding: 15px;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .example-card:hover { border-color: #00ff00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); }
+        .example-card h4 { color: #e0ffe0; font-size: 0.9rem; margin-bottom: 5px; }
+        .example-card p { color: #006600; font-size: 0.75rem; }
+        .example-card .tag { display: inline-block; padding: 2px 8px; font-size: 0.65rem; border: 1px solid #00ff00; color: #00ff00; margin-top: 5px; }
+
+        footer { text-align: center; padding: 30px 0; border-top: 1px solid #00ff00; color: #00aa00; font-size: 0.8rem; letter-spacing: 1px; background: rgba(0, 0, 0, 0.95); }
+        footer p { margin-bottom: 5px; }
+        footer a { color: #00ff00; text-decoration: none; }
+        footer a:hover { text-shadow: 0 0 5px #00ff00; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #00ff00; }
+
+        @media (max-width: 1000px) { .steps { grid-template-columns: 1fr; } .example-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { header h1 { font-size: 2rem; } nav { flex-wrap: wrap; } nav a { flex: 1; text-align: center; min-width: 100px; } }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+    <div class="container">
+        <header>
+            <h1>PROJECT AVA</h1>
+            <p class="tagline">[ AI-Powered Hardware Verification Agent ]</p>
+        </header>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="designs.html">Designs</a>
+            <a href="upload.html" class="active">Upload</a>
+            <a href="history.html">History</a>
+            <a href="analyze.html">Analyze</a>
+            <a href="live.html">Live</a>
+        </nav>
+
+        <main>
+            <section class="upload-hero">
+                <h2>Upload & Verify</h2>
+                <p>Submit your Verilog design and specification. The AI agent will automatically
+                   generate a cocotb testbench, simulate with Icarus Verilog, and self-correct
+                   until all tests pass.</p>
+            </section>
+
+            <!-- Steps -->
+            <section class="steps">
+                <div class="step-card active" id="step1">
+                    <div class="step-num">[1]</div>
+                    <h3>Upload Design</h3>
+                    <p>Paste or drag Verilog source + specification</p>
+                </div>
+                <div class="step-card" id="step2">
+                    <div class="step-num">[2]</div>
+                    <h3>Agent Runs</h3>
+                    <p>Generate testbench, simulate, self-correct</p>
+                </div>
+                <div class="step-card" id="step3">
+                    <div class="step-num">[3]</div>
+                    <h3>View Results</h3>
+                    <p>Live test results on the Live page</p>
+                </div>
+            </section>
+
+            <!-- Example Designs (quick-fill) -->
+            <section class="examples-section">
+                <h2>Try an Example Design</h2>
+                <div class="example-grid" id="example-grid">
+                    <div class="example-card" data-design="adder">
+                        <h4>4-Bit Adder</h4>
+                        <p>Simple combinational adder with carry</p>
+                        <span class="tag">COMBINATIONAL</span>
+                    </div>
+                    <div class="example-card" data-design="counter">
+                        <h4>4-Bit Counter</h4>
+                        <p>Synchronous counter with enable and reset</p>
+                        <span class="tag">SEQUENTIAL</span>
+                    </div>
+                    <div class="example-card" data-design="dvfs">
+                        <h4>DVFS Controller</h4>
+                        <p>Dynamic voltage/frequency scaling — the research gap</p>
+                        <span class="tag">POWER-AWARE</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Verilog Upload -->
+            <section class="form-section" data-label="// VERILOG_SOURCE">
+                <h2>Step 1: Verilog Design</h2>
+                <div class="form-group">
+                    <label>Design Name</label>
+                    <input type="text" id="designName" placeholder="e.g., my_alu, dvfs_controller">
+                </div>
+                <div class="form-group">
+                    <label>Top-Level Module Name</label>
+                    <input type="text" id="toplevel" placeholder="e.g., alu (the module name in your Verilog)">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category">
+                        <option value="combinational">Combinational</option>
+                        <option value="sequential">Sequential</option>
+                        <option value="power-aware">Power-Aware</option>
+                        <option value="buffer">Buffer / Memory</option>
+                        <option value="protocol">Protocol</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Verilog Source Code</label>
+                    <div class="drop-zone" id="verilogDrop">
+                        <div class="icon">&gt;_</div>
+                        <p>Drag .v file here or click to browse</p>
+                        <div class="sub">Or paste code in the editor below</div>
+                        <input type="file" id="verilogFile" accept=".v,.sv" style="display:none;">
+                    </div>
+                    <textarea id="verilogCode" placeholder="// Paste your Verilog module here
+module my_design (
+    input wire clk,
+    input wire rst,
+    ...
+);
+    ...
+endmodule"></textarea>
+                    <div class="hint">Supports single-file Verilog designs. Include full module with ports.</div>
+                </div>
+                <div id="verilogPreview" class="preview-section">
+                    <h3>// VERILOG PREVIEW</h3>
+                    <pre id="verilogPreviewCode"></pre>
+                </div>
+            </section>
+
+            <!-- Specification -->
+            <section class="form-section" data-label="// SPECIFICATION">
+                <h2>Step 2: Specification</h2>
+                <div class="form-group">
+                    <label>Natural Language Specification</label>
+                    <textarea id="specText" placeholder="Describe what the design should do. Be specific about:
+- Input/output behavior
+- Clock and reset behavior
+- Edge cases to test
+- Timing requirements
+
+Example: 8-bit ALU with add, sub, and, or, xor operations.
+When op=000, result = a + b. When op=001, result = a - b.
+Zero flag should be high when result is 0."></textarea>
+                    <div class="hint">The more specific your spec, the better the generated tests. Include signal names, expected behavior, and edge cases.</div>
+                </div>
+            </section>
+
+            <!-- Submit -->
+            <section class="form-section" data-label="// SUBMIT_FOR_VERIFICATION">
+                <h2>Step 3: Submit</h2>
+                <p style="color: #00aa00; margin-bottom: 15px; font-size: 0.9rem;">
+                    The agent will pick up your design, generate a cocotb testbench, run Icarus Verilog simulation,
+                    and self-correct up to 3 corrections + 10 reboots until all tests pass.
+                </p>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="submitBtn" disabled>Submit for Verification</button>
+                    <button class="btn btn-secondary" id="clearBtn">Clear All</button>
+                </div>
+                <div class="status-msg" id="statusMsg"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>PROJECT AVA v1.0.0 // AI-Powered Hardware Verification Agent</p>
+            <p>Built by Ha Le // University of Central Florida // Unary Lab (Dr. Di Wu)</p>
+            <p>Supported by AMD Orlando // <a href="https://github.com/vanthienha199/project-ava">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // ── Supabase ──
+        const SUPABASE_URL = 'https://yvpmoyzggbcfaldhsbkl.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2cG1veXpnZ2JjZmFsZGhzYmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5Njg5OTMsImV4cCI6MjA4OTU0NDk5M30.qgpE7ayn57SMzeJVgp7mBu3VJ825gTTe8G6OmfTc1b0';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ── Matrix Rain ──
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+        const chars = 'PROJECTAVA01VERILOGCOCOTBDVFSPOWER';
+        const charArray = chars.split('');
+        const fontSize = 14;
+        let columns = Math.floor(canvas.width / fontSize);
+        let drops = [];
+        for (let i = 0; i < columns; i++) drops[i] = Math.random() * -100;
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00aa00';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        // ── Example designs ──
+        const EXAMPLES = {
+            adder: {
+                name: '4_bit_adder',
+                toplevel: 'adder',
+                category: 'combinational',
+                verilog: `module adder (
+    input  wire [3:0] a,
+    input  wire [3:0] b,
+    output wire [4:0] sum
+);
+    assign sum = a + b;
+endmodule`,
+                spec: `4-bit adder with carry output.
+Inputs: a[3:0], b[3:0] (4-bit unsigned integers).
+Output: sum[4:0] (5-bit result including carry).
+sum = a + b for all input combinations.
+Test edge cases: 0+0=0, 15+15=30, 1+1=2, 15+1=16 (carry).`
+            },
+            counter: {
+                name: '4_bit_counter',
+                toplevel: 'counter',
+                category: 'sequential',
+                verilog: `module counter (
+    input  wire       clk,
+    input  wire       rst,
+    input  wire       en,
+    output reg  [3:0] count
+);
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            count <= 4'b0;
+        else if (en)
+            count <= count + 1;
+    end
+endmodule`,
+                spec: `4-bit synchronous counter with enable and async reset.
+Clock: clk (rising edge triggered).
+Reset: rst (active high, asynchronous) — sets count to 0.
+Enable: en — when high, count increments by 1 each clock cycle.
+When en is low, count holds its value.
+count wraps around from 15 to 0.
+Test: reset behavior, counting sequence, enable/disable, wrap-around.`
+            },
+            dvfs: {
+                name: 'dvfs_controller',
+                toplevel: 'dvfs_controller',
+                category: 'power-aware',
+                verilog: `module dvfs_controller (
+    input  wire       clk,
+    input  wire       rst,
+    input  wire [7:0] workload,
+    input  wire [7:0] temperature,
+    output reg  [1:0] freq_sel,
+    output reg  [1:0] voltage_sel,
+    output reg        throttle
+);
+    localparam TEMP_CRITICAL = 8'd85;
+    localparam TEMP_WARNING  = 8'd75;
+    localparam LOAD_HIGH     = 8'd200;
+    localparam LOAD_LOW      = 8'd50;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            freq_sel    <= 2'b10;
+            voltage_sel <= 2'b10;
+            throttle    <= 1'b0;
+        end else if (temperature >= TEMP_CRITICAL) begin
+            freq_sel    <= 2'b00;
+            voltage_sel <= 2'b00;
+            throttle    <= 1'b1;
+        end else if (temperature >= TEMP_WARNING) begin
+            freq_sel    <= 2'b01;
+            voltage_sel <= 2'b01;
+            throttle    <= 1'b0;
+        end else if (workload >= LOAD_HIGH) begin
+            freq_sel    <= 2'b11;
+            voltage_sel <= 2'b11;
+            throttle    <= 1'b0;
+        end else if (workload <= LOAD_LOW) begin
+            freq_sel    <= 2'b00;
+            voltage_sel <= 2'b00;
+            throttle    <= 1'b0;
+        end else begin
+            freq_sel    <= 2'b10;
+            voltage_sel <= 2'b10;
+            throttle    <= 1'b0;
+        end
+    end
+endmodule`,
+                spec: `DVFS (Dynamic Voltage and Frequency Scaling) controller for power management.
+Inputs: clk, rst (async active high), workload[7:0] (0-255), temperature[7:0] (0-255 Celsius).
+Outputs: freq_sel[1:0] (frequency level 0-3), voltage_sel[1:0] (voltage level 0-3), throttle (thermal throttling active).
+
+Behavior:
+- Reset: freq_sel=2, voltage_sel=2, throttle=0 (medium performance).
+- Temperature >= 85: CRITICAL — freq=0, voltage=0, throttle=1 (emergency throttle).
+- Temperature >= 75: WARNING — freq=1, voltage=1, throttle=0 (reduce performance).
+- Workload >= 200: HIGH LOAD — freq=3, voltage=3, throttle=0 (max performance).
+- Workload <= 50: LOW LOAD — freq=0, voltage=0, throttle=0 (power save).
+- Otherwise: NORMAL — freq=2, voltage=2, throttle=0.
+Priority: temperature overrides workload (thermal safety first).
+
+Test: reset state, each temperature/workload zone, priority (high temp + high workload should throttle), transitions between states.`
+            }
+        };
+
+        // ── Example click handlers ──
+        document.querySelectorAll('.example-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const key = card.dataset.design;
+                const ex = EXAMPLES[key];
+                if (!ex) return;
+                document.getElementById('designName').value = ex.name;
+                document.getElementById('toplevel').value = ex.toplevel;
+                document.getElementById('category').value = ex.category;
+                document.getElementById('verilogCode').value = ex.verilog;
+                document.getElementById('specText').value = ex.spec;
+                showVerilogPreview(ex.verilog);
+                validateForm();
+                // Highlight selected example
+                document.querySelectorAll('.example-card').forEach(c => c.style.borderColor = '#003300');
+                card.style.borderColor = '#00ff00';
+            });
+        });
+
+        // ── File drag & drop ──
+        const dropZone = document.getElementById('verilogDrop');
+        const fileInput = document.getElementById('verilogFile');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file) handleVerilogFile(file);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleVerilogFile(e.target.files[0]);
+        });
+
+        function handleVerilogFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const code = e.target.result;
+                document.getElementById('verilogCode').value = code;
+                showVerilogPreview(code);
+                // Try to extract module name
+                const match = code.match(/module\s+(\w+)/);
+                if (match) {
+                    document.getElementById('toplevel').value = match[1];
+                    if (!document.getElementById('designName').value) {
+                        document.getElementById('designName').value = match[1];
+                    }
+                }
+                validateForm();
+            };
+            reader.readAsText(file);
+        }
+
+        function showVerilogPreview(code) {
+            const preview = document.getElementById('verilogPreview');
+            const pre = document.getElementById('verilogPreviewCode');
+            const lines = code.split('\n');
+            pre.textContent = lines.slice(0, 20).join('\n') + (lines.length > 20 ? '\n// ... (' + lines.length + ' lines total)' : '');
+            preview.style.display = 'block';
+        }
+
+        // ── Form validation ──
+        function validateForm() {
+            const name = document.getElementById('designName').value.trim();
+            const toplevel = document.getElementById('toplevel').value.trim();
+            const verilog = document.getElementById('verilogCode').value.trim();
+            const spec = document.getElementById('specText').value.trim();
+            document.getElementById('submitBtn').disabled = !(name && toplevel && verilog && spec);
+        }
+
+        document.getElementById('designName').addEventListener('input', validateForm);
+        document.getElementById('toplevel').addEventListener('input', validateForm);
+        document.getElementById('verilogCode').addEventListener('input', () => {
+            const code = document.getElementById('verilogCode').value;
+            if (code.trim()) showVerilogPreview(code);
+            validateForm();
+        });
+        document.getElementById('specText').addEventListener('input', validateForm);
+
+        // ── Clear ──
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            document.getElementById('designName').value = '';
+            document.getElementById('toplevel').value = '';
+            document.getElementById('verilogCode').value = '';
+            document.getElementById('specText').value = '';
+            document.getElementById('verilogPreview').style.display = 'none';
+            document.getElementById('statusMsg').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+            document.querySelectorAll('.example-card').forEach(c => c.style.borderColor = '#003300');
+            setStep(1);
+        });
+
+        // ── Step indicators ──
+        function setStep(n) {
+            document.querySelectorAll('.step-card').forEach((s, i) => {
+                s.classList.toggle('active', i < n);
+            });
+        }
+
+        // ── Submit ──
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const name = document.getElementById('designName').value.trim();
+            const toplevel = document.getElementById('toplevel').value.trim();
+            const category = document.getElementById('category').value;
+            const verilog = document.getElementById('verilogCode').value.trim();
+            const spec = document.getElementById('specText').value.trim();
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            showStatus('SUBMITTING DESIGN... Please wait', 'loading');
+            setStep(2);
+
+            try {
+                // 1. Insert design into Supabase
+                const { data: design, error: dErr } = await sb
+                    .from('designs')
+                    .insert({
+                        name: name,
+                        category: category,
+                        toplevel: toplevel,
+                        verilog_source: verilog,
+                        spec: spec,
+                        files: [name + '.v'],
+                    })
+                    .select()
+                    .single();
+
+                if (dErr) throw dErr;
+
+                // 2. Insert a pending run
+                const { data: run, error: rErr } = await sb
+                    .from('runs')
+                    .insert({
+                        design_id: design.id,
+                        design_name: name,
+                        backend: 'pending',
+                        model: 'pending',
+                        passed: false,
+                        total_tests: 0,
+                        pass_count: 0,
+                        fail_count: 0,
+                        iterations: 0,
+                        corrections: 0,
+                        reboots: 0,
+                    })
+                    .select()
+                    .single();
+
+                if (rErr) throw rErr;
+
+                setStep(3);
+                showStatus(
+                    `DESIGN SUBMITTED // ID: ${design.id.slice(0, 8)}... // ` +
+                    `The agent will pick this up automatically. ` +
+                    `<a href="live.html" style="color:#00ff00;">Watch on Live page &gt;&gt;&gt;</a>`,
+                    'success'
+                );
+
+            } catch (err) {
+                showStatus('ERROR: ' + (err.message || err.details || JSON.stringify(err)), 'error');
+                btn.disabled = false;
+                setStep(1);
+            }
+        });
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('statusMsg');
+            el.innerHTML = msg;
+            el.className = 'status-msg ' + type;
+        }
+    </script>
+</body>
+</html>
