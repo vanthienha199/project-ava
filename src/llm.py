@@ -101,8 +101,9 @@ class LLM:
         )
 
     def _call_anthropic_api(self, prompt, temperature, max_tokens) -> LLMResponse:
-        """Call Anthropic API directly via urllib (no SDK dependency)."""
+        """Call Anthropic API via the official SDK (proper timeout handling)."""
         import os
+        import anthropic
 
         if not self._api_key:
             self._api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -112,67 +113,32 @@ class LLM:
                 "Export it or use backend='claude_cli' instead."
             )
 
-        payload = json.dumps({
-            "model": self.model,
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-            "messages": [{"role": "user", "content": prompt}],
-        }).encode()
-
-        req = urllib.request.Request(
-            "https://api.anthropic.com/v1/messages",
-            data=payload,
-            headers={
-                "Content-Type": "application/json",
-                "x-api-key": self._api_key,
-                "anthropic-version": "2023-06-01",
-            },
+        client = anthropic.Anthropic(
+            api_key=self._api_key,
+            timeout=600.0,  # 10 min hard timeout
+            max_retries=5,  # SDK handles retries with backoff for 429/529
         )
 
         start = time.monotonic()
-        # Retry with exponential backoff for rate limits
-        max_retries = 5
-        for attempt in range(max_retries):
-            try:
-                with urllib.request.urlopen(req, timeout=300) as resp:
-                    data = json.loads(resp.read())
-                break
-            except urllib.error.HTTPError as e:
-                if e.code in (429, 529) and attempt < max_retries - 1:
-                    wait = 2 ** attempt * 5  # 5, 10, 20, 40, 80 seconds
-                    print(f"  [llm] Rate limited (HTTP {e.code}), retrying in {wait}s (attempt {attempt + 1}/{max_retries})")
-                    time.sleep(wait)
-                    # Rebuild request (urlopen consumes it)
-                    req = urllib.request.Request(
-                        "https://api.anthropic.com/v1/messages",
-                        data=payload,
-                        headers={
-                            "Content-Type": "application/json",
-                            "x-api-key": self._api_key,
-                            "anthropic-version": "2023-06-01",
-                        },
-                    )
-                else:
-                    # Read error body for debugging
-                    try:
-                        error_body = e.read().decode("utf-8")
-                        print(f"  [llm] HTTP {e.code} error body: {error_body[:500]}")
-                    except Exception:
-                        pass
-                    raise
+        message = client.messages.create(
+            model=self.model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            messages=[{"role": "user", "content": prompt}],
+        )
         latency = (time.monotonic() - start) * 1000
 
-        text = data["content"][0]["text"]
-        usage = data.get("usage", {})
+        text = message.content[0].text
+        tokens_in = message.usage.input_tokens
+        tokens_out = message.usage.output_tokens
 
         return LLMResponse(
             text=text,
             model=self.model,
-            tokens_in=usage.get("input_tokens", 0),
-            tokens_out=usage.get("output_tokens", 0),
+            tokens_in=tokens_in,
+            tokens_out=tokens_out,
             latency_ms=latency,
             backend="anthropic_api",
-            raw=data,
         )
 
     def _call_ollama(self, prompt, temperature) -> LLMResponse:
