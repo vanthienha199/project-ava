@@ -1,0 +1,168 @@
+{
+  "design_name": "16_i2c_master",
+  "total_mutants": 69,
+  "killed": 51,
+  "survived": 18,
+  "errors": 0,
+  "mutation_score": 73.9,
+  "by_category": {
+    "conditional_negation": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 41,
+      "killed": 25,
+      "survived": 16,
+      "errors": 0
+    },
+    "constant_bit": {
+      "total": 23,
+      "killed": 22,
+      "survived": 1,
+      "errors": 0
+    },
+    "relational_op": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 2,
+      "killed": 1,
+      "survived": 1,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 35,
+      "category": "stuck_at_zero",
+      "original": "state        <= IDLE;",
+      "mutated": "state        <= 0;",
+      "description": "Line 35: stuck-at-zero"
+    },
+    {
+      "line": 38,
+      "category": "stuck_at_zero",
+      "original": "busy         <= 1'b0;",
+      "mutated": "busy         <= 0;",
+      "description": "Line 38: stuck-at-zero"
+    },
+    {
+      "line": 39,
+      "category": "stuck_at_zero",
+      "original": "ack_received <= 1'b0;",
+      "mutated": "ack_received <= 0;",
+      "description": "Line 39: stuck-at-zero"
+    },
+    {
+      "line": 40,
+      "category": "stuck_at_zero",
+      "original": "done         <= 1'b0;",
+      "mutated": "done         <= 0;",
+      "description": "Line 40: stuck-at-zero"
+    },
+    {
+      "line": 41,
+      "category": "stuck_at_zero",
+      "original": "shift_reg    <= 8'd0;",
+      "mutated": "shift_reg    <= 0;",
+      "description": "Line 41: stuck-at-zero"
+    },
+    {
+      "line": 42,
+      "category": "stuck_at_zero",
+      "original": "bit_cnt      <= 3'd0;",
+      "mutated": "bit_cnt      <= 0;",
+      "description": "Line 42: stuck-at-zero"
+    },
+    {
+      "line": 44,
+      "category": "stuck_at_zero",
+      "original": "done <= 1'b0;  // default: done is a pulse",
+      "mutated": "done <= 0;",
+      "description": "Line 44: stuck-at-zero"
+    },
+    {
+      "line": 59,
+      "category": "stuck_at_zero",
+      "original": "sda_out <= 1'b0;",
+      "mutated": "sda_out <= 0;",
+      "description": "Line 59: stuck-at-zero"
+    },
+    {
+      "line": 65,
+      "category": "stuck_at_zero",
+      "original": "scl     <= 1'b0;",
+      "mutated": "scl     <= 0;",
+      "description": "Line 65: stuck-at-zero"
+    },
+    {
+      "line": 66,
+      "category": "stuck_at_zero",
+      "original": "bit_cnt <= 3'd0;",
+      "mutated": "bit_cnt <= 0;",
+      "description": "Line 66: stuck-at-zero"
+    },
+    {
+      "line": 72,
+      "category": "stuck_at_zero",
+      "original": "scl     <= 1'b0;",
+      "mutated": "scl     <= 0;",
+      "description": "Line 72: stuck-at-zero"
+    },
+    {
+      "line": 84,
+      "category": "constant_bit",
+      "original": "shift_reg <= {shift_reg[6:0], 1'b0};",
+      "mutated": "shift_reg <= {shift_reg[6:0], 1'b1};",
+      "description": "Line 84: 1'b0 -> 1'b1"
+    },
+    {
+      "line": 91,
+      "category": "stuck_at_zero",
+      "original": "scl     <= 1'b0;",
+      "mutated": "scl     <= 0;",
+      "description": "Line 91: stuck-at-zero"
+    },
+    {
+      "line": 92,
+      "category": "arithmetic_op",
+      "original": "sda_out <= 1'b1;  // Release line (open-drain)",
+      "mutated": "sda_out <= 1'b1;  // Release line (open+drain)",
+      "description": "Line 92: - -> +"
+    },
+    {
+      "line": 105,
+      "category": "stuck_at_zero",
+      "original": "scl     <= 1'b0;",
+      "mutated": "scl     <= 0;",
+      "description": "Line 105: stuck-at-zero"
+    },
+    {
+      "line": 106,
+      "category": "stuck_at_zero",
+      "original": "sda_out <= 1'b0;",
+      "mutated": "sda_out <= 0;",
+      "description": "Line 106: stuck-at-zero"
+    },
+    {
+      "line": 114,
+      "category": "stuck_at_zero",
+      "original": "busy    <= 1'b0;",
+      "mutated": "busy    <= 0;",
+      "description": "Line 114: stuck-at-zero"
+    },
+    {
+      "line": 116,
+      "category": "stuck_at_zero",
+      "original": "state   <= IDLE;",
+      "mutated": "state   <= 0;",
+      "description": "Line 116: stuck-at-zero"
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "design_name": "11_uart_tx",
+  "total_mutants": 46,
+  "killed": 32,
+  "survived": 14,
+  "errors": 0,
+  "mutation_score": 69.6,
+  "by_category": {
+    "conditional_negation": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 22,
+      "killed": 13,
+      "survived": 9,
+      "errors": 0
+    },
+    "constant_bit": {
+      "total": 11,
+      "killed": 7,
+      "survived": 4,
+      "errors": 0
+    },
+    "relational_op": {
+      "total": 4,
+      "killed": 4,
+      "survived": 0,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 7,
+      "killed": 6,
+      "survived": 1,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 28,
+      "category": "stuck_at_zero",
+      "original": "state     <= IDLE;",
+      "mutated": "state     <= 0;",
+      "description": "Line 28: stuck-at-zero"
+    },
+    {
+      "line": 29,
+      "category": "constant_bit",
+      "original": "tx_out    <= 1'b1;    // Idle high",
+      "mutated": "tx_out    <= 1'b0;    // Idle high",
+      "description": "Line 29: 1'b1 -> 1'b0"
+    },
+    {
+      "line": 29,
+      "category": "stuck_at_zero",
+      "original": "tx_out    <= 1'b1;    // Idle high",
+      "mutated": "tx_out    <= 0;",
+      "description": "Line 29: stuck-at-zero"
+    },
+    {
+      "line": 30,
+      "category": "constant_bit",
+      "original": "tx_busy   <= 1'b0;",
+      "mutated": "tx_busy   <= 1'b1;",
+      "description": "Line 30: 1'b0 -> 1'b1"
+    },
+    {
+      "line": 30,
+      "category": "stuck_at_zero",
+      "original": "tx_busy   <= 1'b0;",
+      "mutated": "tx_busy   <= 0;",
+      "description": "Line 30: stuck-at-zero"
+    },
+    {
+      "line": 31,
+      "category": "constant_bit",
+      "original": "tx_done   <= 1'b0;",
+      "mutated": "tx_done   <= 1'b1;",
+      "description": "Line 31: 1'b0 -> 1'b1"
+    },
+    {
+      "line": 31,
+      "category": "stuck_at_zero",
+      "original": "tx_done   <= 1'b0;",
+      "mutated": "tx_done   <= 0;",
+      "description": "Line 31: stuck-at-zero"
+    },
+    {
+      "line": 36,
+      "category": "stuck_at_zero",
+      "original": "tx_done <= 1'b0;  // Default: not done",
+      "mutated": "tx_done <= 0;",
+      "description": "Line 36: stuck-at-zero"
+    },
+    {
+      "line": 41,
+      "category": "stuck_at_zero",
+      "original": "tx_busy <= 1'b0;",
+      "mutated": "tx_busy <= 0;",
+      "description": "Line 41: stuck-at-zero"
+    },
+    {
+      "line": 51,
+      "category": "stuck_at_zero",
+      "original": "tx_out <= 1'b0;  // Start bit = 0",
+      "mutated": "tx_out <= 0;",
+      "description": "Line 51: stuck-at-zero"
+    },
+    {
+      "line": 78,
+      "category": "arithmetic_op",
+      "original": "clk_count <= clk_count + 1;",
+      "mutated": "clk_count <= clk_count - 1;",
+      "description": "Line 78: + -> -"
+    },
+    {
+      "line": 81,
+      "category": "constant_bit",
+      "original": "tx_busy <= 1'b0;",
+      "mutated": "tx_busy <= 1'b1;",
+      "description": "Line 81: 1'b0 -> 1'b1"
+    },
+    {
+      "line": 81,
+      "category": "stuck_at_zero",
+      "original": "tx_busy <= 1'b0;",
+      "mutated": "tx_busy <= 0;",
+      "description": "Line 81: stuck-at-zero"
+    },
+    {
+      "line": 82,
+      "category": "stuck_at_zero",
+      "original": "state   <= IDLE;",
+      "mutated": "state   <= 0;",
+      "description": "Line 82: stuck-at-zero"
+    }
+  ]
+}

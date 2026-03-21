@@ -1,0 +1,29 @@
+{
+  "design_name": "02_alu",
+  "total_mutants": 5,
+  "killed": 5,
+  "survived": 0,
+  "errors": 0,
+  "mutation_score": 100.0,
+  "by_category": {
+    "arithmetic_op": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    },
+    "bitwise_vs_logical": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    },
+    "relational_op": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    }
+  },
+  "survived_details": []
+}

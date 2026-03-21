@@ -1,0 +1,104 @@
+{
+  "design_name": "15_priority_encoder",
+  "total_mutants": 24,
+  "killed": 16,
+  "survived": 8,
+  "errors": 0,
+  "mutation_score": 66.7,
+  "by_category": {
+    "conditional_negation": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 8,
+      "killed": 2,
+      "survived": 6,
+      "errors": 0
+    },
+    "constant_bit": {
+      "total": 10,
+      "killed": 9,
+      "survived": 1,
+      "errors": 0
+    },
+    "relational_op": {
+      "total": 1,
+      "killed": 0,
+      "survived": 1,
+      "errors": 0
+    },
+    "logical_op": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 26,
+      "category": "stuck_at_zero",
+      "original": "prev_irq  <= 8'b0;",
+      "mutated": "prev_irq  <= 0;",
+      "description": "Line 26: stuck-at-zero"
+    },
+    {
+      "line": 27,
+      "category": "stuck_at_zero",
+      "original": "irq_id    <= 3'b000;",
+      "mutated": "irq_id    <= 0;",
+      "description": "Line 27: stuck-at-zero"
+    },
+    {
+      "line": 28,
+      "category": "stuck_at_zero",
+      "original": "int_valid <= 1'b0;",
+      "mutated": "int_valid <= 0;",
+      "description": "Line 28: stuck-at-zero"
+    },
+    {
+      "line": 31,
+      "category": "constant_bit",
+      "original": "int_valid <= 1'b0;",
+      "mutated": "int_valid <= 1'b1;",
+      "description": "Line 31: 1'b0 -> 1'b1"
+    },
+    {
+      "line": 31,
+      "category": "stuck_at_zero",
+      "original": "int_valid <= 1'b0;",
+      "mutated": "int_valid <= 0;",
+      "description": "Line 31: stuck-at-zero"
+    },
+    {
+      "line": 48,
+      "category": "relational_op",
+      "original": "assign nested_int_pending = int_valid && (irq_id < current_isr_priority);",
+      "mutated": "assign nested_int_pending = int_valid && (irq_id <= current_isr_priority);",
+      "description": "Line 48: < -> <="
+    },
+    {
+      "line": 56,
+      "category": "stuck_at_zero",
+      "original": "irq_ack <= 8'b0;",
+      "mutated": "irq_ack <= 0;",
+      "description": "Line 56: stuck-at-zero"
+    },
+    {
+      "line": 60,
+      "category": "stuck_at_zero",
+      "original": "irq_ack <= 8'b0;",
+      "mutated": "irq_ack <= 0;",
+      "description": "Line 60: stuck-at-zero"
+    }
+  ]
+}

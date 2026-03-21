@@ -1,0 +1,148 @@
+{
+  "design_name": "18_memory_controller",
+  "total_mutants": 40,
+  "killed": 24,
+  "survived": 16,
+  "errors": 0,
+  "mutation_score": 60.0,
+  "by_category": {
+    "conditional_negation": {
+      "total": 3,
+      "killed": 3,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 25,
+      "killed": 10,
+      "survived": 15,
+      "errors": 0
+    },
+    "constant_bit": {
+      "total": 11,
+      "killed": 10,
+      "survived": 1,
+      "errors": 0
+    },
+    "relational_op": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 34,
+      "category": "stuck_at_zero",
+      "original": "state       <= IDLE;",
+      "mutated": "state       <= 0;",
+      "description": "Line 34: stuck-at-zero"
+    },
+    {
+      "line": 35,
+      "category": "stuck_at_zero",
+      "original": "rdata       <= 8'd0;",
+      "mutated": "rdata       <= 0;",
+      "description": "Line 35: stuck-at-zero"
+    },
+    {
+      "line": 36,
+      "category": "stuck_at_zero",
+      "original": "rdata_valid <= 1'b0;",
+      "mutated": "rdata_valid <= 0;",
+      "description": "Line 36: stuck-at-zero"
+    },
+    {
+      "line": 37,
+      "category": "stuck_at_zero",
+      "original": "busy        <= 1'b0;",
+      "mutated": "busy        <= 0;",
+      "description": "Line 37: stuck-at-zero"
+    },
+    {
+      "line": 38,
+      "category": "stuck_at_zero",
+      "original": "error       <= 1'b0;",
+      "mutated": "error       <= 0;",
+      "description": "Line 38: stuck-at-zero"
+    },
+    {
+      "line": 39,
+      "category": "stuck_at_zero",
+      "original": "addr_reg    <= 8'd0;",
+      "mutated": "addr_reg    <= 0;",
+      "description": "Line 39: stuck-at-zero"
+    },
+    {
+      "line": 40,
+      "category": "stuck_at_zero",
+      "original": "wdata_reg   <= 8'd0;",
+      "mutated": "wdata_reg   <= 0;",
+      "description": "Line 40: stuck-at-zero"
+    },
+    {
+      "line": 43,
+      "category": "stuck_at_zero",
+      "original": "mem[i] <= 8'd0;",
+      "mutated": "mem[i] <= 0;",
+      "description": "Line 43: stuck-at-zero"
+    },
+    {
+      "line": 45,
+      "category": "stuck_at_zero",
+      "original": "rdata_valid <= 1'b0;  // default: pulse",
+      "mutated": "rdata_valid <= 0;",
+      "description": "Line 45: stuck-at-zero"
+    },
+    {
+      "line": 46,
+      "category": "constant_bit",
+      "original": "error       <= 1'b0;  // default: pulse",
+      "mutated": "error       <= 1'b1;  // default: pulse",
+      "description": "Line 46: 1'b0 -> 1'b1"
+    },
+    {
+      "line": 46,
+      "category": "stuck_at_zero",
+      "original": "error       <= 1'b0;  // default: pulse",
+      "mutated": "error       <= 0;",
+      "description": "Line 46: stuck-at-zero"
+    },
+    {
+      "line": 50,
+      "category": "stuck_at_zero",
+      "original": "busy <= 1'b0;",
+      "mutated": "busy <= 0;",
+      "description": "Line 50: stuck-at-zero"
+    },
+    {
+      "line": 69,
+      "category": "stuck_at_zero",
+      "original": "busy          <= 1'b0;",
+      "mutated": "busy          <= 0;",
+      "description": "Line 69: stuck-at-zero"
+    },
+    {
+      "line": 70,
+      "category": "stuck_at_zero",
+      "original": "state         <= IDLE;",
+      "mutated": "state         <= 0;",
+      "description": "Line 70: stuck-at-zero"
+    },
+    {
+      "line": 76,
+      "category": "stuck_at_zero",
+      "original": "busy        <= 1'b0;",
+      "mutated": "busy        <= 0;",
+      "description": "Line 76: stuck-at-zero"
+    },
+    {
+      "line": 77,
+      "category": "stuck_at_zero",
+      "original": "state       <= IDLE;",
+      "mutated": "state       <= 0;",
+      "description": "Line 77: stuck-at-zero"
+    }
+  ]
+}

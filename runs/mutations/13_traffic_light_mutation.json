@@ -1,0 +1,98 @@
+{
+  "design_name": "13_traffic_light",
+  "total_mutants": 28,
+  "killed": 20,
+  "survived": 8,
+  "errors": 0,
+  "mutation_score": 71.4,
+  "by_category": {
+    "conditional_negation": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 14,
+      "killed": 7,
+      "survived": 7,
+      "errors": 0
+    },
+    "relational_op": {
+      "total": 4,
+      "killed": 3,
+      "survived": 1,
+      "errors": 0
+    },
+    "logical_op": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 8,
+      "killed": 8,
+      "survived": 0,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 33,
+      "category": "stuck_at_zero",
+      "original": "state <= S_HWY_GREEN;",
+      "mutated": "state <= 0;",
+      "description": "Line 33: stuck-at-zero"
+    },
+    {
+      "line": 34,
+      "category": "stuck_at_zero",
+      "original": "count <= 4'd0;",
+      "mutated": "count <= 0;",
+      "description": "Line 34: stuck-at-zero"
+    },
+    {
+      "line": 38,
+      "category": "relational_op",
+      "original": "if (count >= T_HWY_GREEN - 1 && sensor) begin",
+      "mutated": "if (count > T_HWY_GREEN - 1 && sensor) begin",
+      "description": "Line 38: >= -> >"
+    },
+    {
+      "line": 40,
+      "category": "stuck_at_zero",
+      "original": "count <= 4'd0;",
+      "mutated": "count <= 0;",
+      "description": "Line 40: stuck-at-zero"
+    },
+    {
+      "line": 48,
+      "category": "stuck_at_zero",
+      "original": "count <= 4'd0;",
+      "mutated": "count <= 0;",
+      "description": "Line 48: stuck-at-zero"
+    },
+    {
+      "line": 56,
+      "category": "stuck_at_zero",
+      "original": "count <= 4'd0;",
+      "mutated": "count <= 0;",
+      "description": "Line 56: stuck-at-zero"
+    },
+    {
+      "line": 63,
+      "category": "stuck_at_zero",
+      "original": "state <= S_HWY_GREEN;",
+      "mutated": "state <= 0;",
+      "description": "Line 63: stuck-at-zero"
+    },
+    {
+      "line": 64,
+      "category": "stuck_at_zero",
+      "original": "count <= 4'd0;",
+      "mutated": "count <= 0;",
+      "description": "Line 64: stuck-at-zero"
+    }
+  ]
+}

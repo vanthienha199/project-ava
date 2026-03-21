@@ -1,0 +1,78 @@
+{
+  "design_name": "09_fifo",
+  "total_mutants": 19,
+  "killed": 13,
+  "survived": 6,
+  "errors": 0,
+  "mutation_score": 68.4,
+  "by_category": {
+    "relational_op": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    },
+    "conditional_negation": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 10,
+      "killed": 6,
+      "survived": 4,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 6,
+      "killed": 4,
+      "survived": 2,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 47,
+      "category": "stuck_at_zero",
+      "original": "mem[wr_ptr] <= wr_data;",
+      "mutated": "mem[wr_ptr] <= 0;",
+      "description": "Line 47: stuck-at-zero"
+    },
+    {
+      "line": 48,
+      "category": "stuck_at_zero",
+      "original": "rd_data <= mem[rd_ptr];",
+      "mutated": "rd_data <= 0;",
+      "description": "Line 48: stuck-at-zero"
+    },
+    {
+      "line": 49,
+      "category": "arithmetic_op",
+      "original": "wr_ptr <= wr_ptr + 1;",
+      "mutated": "wr_ptr <= wr_ptr - 1;",
+      "description": "Line 49: + -> -"
+    },
+    {
+      "line": 49,
+      "category": "stuck_at_zero",
+      "original": "wr_ptr <= wr_ptr + 1;",
+      "mutated": "wr_ptr <= 0;",
+      "description": "Line 49: stuck-at-zero"
+    },
+    {
+      "line": 50,
+      "category": "arithmetic_op",
+      "original": "rd_ptr <= rd_ptr + 1;",
+      "mutated": "rd_ptr <= rd_ptr - 1;",
+      "description": "Line 50: + -> -"
+    },
+    {
+      "line": 50,
+      "category": "stuck_at_zero",
+      "original": "rd_ptr <= rd_ptr + 1;",
+      "mutated": "rd_ptr <= 0;",
+      "description": "Line 50: stuck-at-zero"
+    }
+  ]
+}

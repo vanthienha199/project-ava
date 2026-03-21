@@ -1,0 +1,195 @@
+{
+  "design_name": "06_power_fsm",
+  "total_mutants": 53,
+  "killed": 32,
+  "survived": 21,
+  "errors": 0,
+  "mutation_score": 60.4,
+  "by_category": {
+    "conditional_negation": {
+      "total": 3,
+      "killed": 3,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 28,
+      "killed": 14,
+      "survived": 14,
+      "errors": 0
+    },
+    "constant_bit": {
+      "total": 10,
+      "killed": 6,
+      "survived": 4,
+      "errors": 0
+    },
+    "relational_op": {
+      "total": 10,
+      "killed": 8,
+      "survived": 2,
+      "errors": 0
+    },
+    "logical_op": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 1,
+      "killed": 0,
+      "survived": 1,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 22,
+      "category": "stuck_at_zero",
+      "original": "state <= IDLE;",
+      "mutated": "state <= 0;",
+      "description": "Line 22: stuck-at-zero"
+    },
+    {
+      "line": 23,
+      "category": "constant_bit",
+      "original": "clk_enable <= 1'b0;",
+      "mutated": "clk_enable <= 1'b1;",
+      "description": "Line 23: 1'b0 -> 1'b1"
+    },
+    {
+      "line": 23,
+      "category": "stuck_at_zero",
+      "original": "clk_enable <= 1'b0;",
+      "mutated": "clk_enable <= 0;",
+      "description": "Line 23: stuck-at-zero"
+    },
+    {
+      "line": 24,
+      "category": "stuck_at_zero",
+      "original": "voltage_sel <= 2'b00;",
+      "mutated": "voltage_sel <= 0;",
+      "description": "Line 24: stuck-at-zero"
+    },
+    {
+      "line": 25,
+      "category": "constant_bit",
+      "original": "boost_active <= 1'b0;",
+      "mutated": "boost_active <= 1'b1;",
+      "description": "Line 25: 1'b0 -> 1'b1"
+    },
+    {
+      "line": 25,
+      "category": "stuck_at_zero",
+      "original": "boost_active <= 1'b0;",
+      "mutated": "boost_active <= 0;",
+      "description": "Line 25: stuck-at-zero"
+    },
+    {
+      "line": 29,
+      "category": "stuck_at_zero",
+      "original": "clk_enable <= 1'b0;",
+      "mutated": "clk_enable <= 0;",
+      "description": "Line 29: stuck-at-zero"
+    },
+    {
+      "line": 30,
+      "category": "stuck_at_zero",
+      "original": "voltage_sel <= 2'b00;",
+      "mutated": "voltage_sel <= 0;",
+      "description": "Line 30: stuck-at-zero"
+    },
+    {
+      "line": 31,
+      "category": "stuck_at_zero",
+      "original": "boost_active <= 1'b0;",
+      "mutated": "boost_active <= 0;",
+      "description": "Line 31: stuck-at-zero"
+    },
+    {
+      "line": 43,
+      "category": "constant_bit",
+      "original": "boost_active <= 1'b0;",
+      "mutated": "boost_active <= 1'b1;",
+      "description": "Line 43: 1'b0 -> 1'b1"
+    },
+    {
+      "line": 43,
+      "category": "stuck_at_zero",
+      "original": "boost_active <= 1'b0;",
+      "mutated": "boost_active <= 0;",
+      "description": "Line 43: stuck-at-zero"
+    },
+    {
+      "line": 47,
+      "category": "stuck_at_zero",
+      "original": "state <= IDLE;",
+      "mutated": "state <= 0;",
+      "description": "Line 47: stuck-at-zero"
+    },
+    {
+      "line": 48,
+      "category": "relational_op",
+      "original": "else if (request == 2'b11)",
+      "mutated": "else if (request != 2'b11)",
+      "description": "Line 48: == -> !="
+    },
+    {
+      "line": 49,
+      "category": "stuck_at_zero",
+      "original": "state <= ACTIVE;",
+      "mutated": "state <= 0;",
+      "description": "Line 49: stuck-at-zero"
+    },
+    {
+      "line": 55,
+      "category": "stuck_at_zero",
+      "original": "boost_active <= 1'b0;",
+      "mutated": "boost_active <= 0;",
+      "description": "Line 55: stuck-at-zero"
+    },
+    {
+      "line": 58,
+      "category": "relational_op",
+      "original": "else if (request == 2'b01)",
+      "mutated": "else if (request != 2'b01)",
+      "description": "Line 58: == -> !="
+    },
+    {
+      "line": 59,
+      "category": "stuck_at_zero",
+      "original": "state <= LOW_POWER;",
+      "mutated": "state <= 0;",
+      "description": "Line 59: stuck-at-zero"
+    },
+    {
+      "line": 61,
+      "category": "stuck_at_zero",
+      "original": "state <= IDLE;",
+      "mutated": "state <= 0;",
+      "description": "Line 61: stuck-at-zero"
+    },
+    {
+      "line": 67,
+      "category": "constant_bit",
+      "original": "clk_enable <= 1'b1;",
+      "mutated": "clk_enable <= 1'b0;",
+      "description": "Line 67: 1'b1 -> 1'b0"
+    },
+    {
+      "line": 67,
+      "category": "stuck_at_zero",
+      "original": "clk_enable <= 1'b1;",
+      "mutated": "clk_enable <= 0;",
+      "description": "Line 67: stuck-at-zero"
+    },
+    {
+      "line": 73,
+      "category": "arithmetic_op",
+      "original": "state <= ACTIVE;    // any non-boost request drops to active",
+      "mutated": "state <= ACTIVE;    // any non+boost request drops to active",
+      "description": "Line 73: - -> +"
+    }
+  ]
+}

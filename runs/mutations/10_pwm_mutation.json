@@ -1,0 +1,91 @@
+{
+  "design_name": "10_pwm",
+  "total_mutants": 17,
+  "killed": 10,
+  "survived": 7,
+  "errors": 0,
+  "mutation_score": 58.8,
+  "by_category": {
+    "conditional_negation": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 8,
+      "killed": 2,
+      "survived": 6,
+      "errors": 0
+    },
+    "constant_bit": {
+      "total": 4,
+      "killed": 3,
+      "survived": 1,
+      "errors": 0
+    },
+    "relational_op": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 16,
+      "category": "stuck_at_zero",
+      "original": "counter <= 8'd0;",
+      "mutated": "counter <= 0;",
+      "description": "Line 16: stuck-at-zero"
+    },
+    {
+      "line": 17,
+      "category": "constant_bit",
+      "original": "pwm_out <= 1'b0;",
+      "mutated": "pwm_out <= 1'b1;",
+      "description": "Line 17: 1'b0 -> 1'b1"
+    },
+    {
+      "line": 17,
+      "category": "stuck_at_zero",
+      "original": "pwm_out <= 1'b0;",
+      "mutated": "pwm_out <= 0;",
+      "description": "Line 17: stuck-at-zero"
+    },
+    {
+      "line": 19,
+      "category": "stuck_at_zero",
+      "original": "counter <= 8'd0;",
+      "mutated": "counter <= 0;",
+      "description": "Line 19: stuck-at-zero"
+    },
+    {
+      "line": 20,
+      "category": "stuck_at_zero",
+      "original": "pwm_out <= 1'b0;",
+      "mutated": "pwm_out <= 0;",
+      "description": "Line 20: stuck-at-zero"
+    },
+    {
+      "line": 24,
+      "category": "stuck_at_zero",
+      "original": "counter <= 8'd0;",
+      "mutated": "counter <= 0;",
+      "description": "Line 24: stuck-at-zero"
+    },
+    {
+      "line": 32,
+      "category": "stuck_at_zero",
+      "original": "pwm_out <= 1'b0;",
+      "mutated": "pwm_out <= 0;",
+      "description": "Line 32: stuck-at-zero"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "design_name": "19_sha256",
+  "total_mutants": 96,
+  "killed": 96,
+  "survived": 0,
+  "errors": 0,
+  "mutation_score": 100.0,
+  "by_category": {
+    "conditional_negation": {
+      "total": 20,
+      "killed": 20,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 54,
+      "killed": 54,
+      "survived": 0,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 14,
+      "killed": 14,
+      "survived": 0,
+      "errors": 0
+    },
+    "bitwise_vs_logical": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    },
+    "constant_bit": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "relational_op": {
+      "total": 4,
+      "killed": 4,
+      "survived": 0,
+      "errors": 0
+    },
+    "logical_op": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    }
+  },
+  "survived_details": []
+}

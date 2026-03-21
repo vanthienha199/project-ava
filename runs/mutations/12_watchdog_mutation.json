@@ -1,0 +1,63 @@
+{
+  "design_name": "12_watchdog",
+  "total_mutants": 10,
+  "killed": 7,
+  "survived": 3,
+  "errors": 0,
+  "mutation_score": 70.0,
+  "by_category": {
+    "relational_op": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "bitwise_vs_logical": {
+      "total": 1,
+      "killed": 0,
+      "survived": 1,
+      "errors": 0
+    },
+    "conditional_negation": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 5,
+      "killed": 4,
+      "survived": 1,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 2,
+      "killed": 1,
+      "survived": 1,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 14,
+      "category": "bitwise_vs_logical",
+      "original": "assign timeout = enable & (count == 32'd0);",
+      "mutated": "assign timeout = enable && (count == 32'd0);",
+      "description": "Line 14: & -> &&"
+    },
+    {
+      "line": 18,
+      "category": "stuck_at_zero",
+      "original": "count <= 32'h0;",
+      "mutated": "count <= 0;",
+      "description": "Line 18: stuck-at-zero"
+    },
+    {
+      "line": 24,
+      "category": "arithmetic_op",
+      "original": "count <= load_val;       // auto-reload on timeout",
+      "mutated": "count <= load_val;       // auto+reload on timeout",
+      "description": "Line 24: - -> +"
+    }
+  ]
+}

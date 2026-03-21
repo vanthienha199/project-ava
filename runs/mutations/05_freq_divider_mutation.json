@@ -1,0 +1,71 @@
+{
+  "design_name": "05_freq_divider",
+  "total_mutants": 13,
+  "killed": 8,
+  "survived": 5,
+  "errors": 0,
+  "mutation_score": 61.5,
+  "by_category": {
+    "conditional_negation": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 8,
+      "killed": 4,
+      "survived": 4,
+      "errors": 0
+    },
+    "constant_bit": {
+      "total": 3,
+      "killed": 3,
+      "survived": 0,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 1,
+      "killed": 0,
+      "survived": 1,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 14,
+      "category": "stuck_at_zero",
+      "original": "count <= 3'b000;",
+      "mutated": "count <= 0;",
+      "description": "Line 14: stuck-at-zero"
+    },
+    {
+      "line": 15,
+      "category": "stuck_at_zero",
+      "original": "clk_div2 <= 1'b0;",
+      "mutated": "clk_div2 <= 0;",
+      "description": "Line 15: stuck-at-zero"
+    },
+    {
+      "line": 16,
+      "category": "stuck_at_zero",
+      "original": "clk_div4 <= 1'b0;",
+      "mutated": "clk_div4 <= 0;",
+      "description": "Line 16: stuck-at-zero"
+    },
+    {
+      "line": 17,
+      "category": "stuck_at_zero",
+      "original": "clk_div8 <= 1'b0;",
+      "mutated": "clk_div8 <= 0;",
+      "description": "Line 17: stuck-at-zero"
+    },
+    {
+      "line": 19,
+      "category": "arithmetic_op",
+      "original": "count <= count + 1;",
+      "mutated": "count <= count - 1;",
+      "description": "Line 19: + -> -"
+    }
+  ]
+}

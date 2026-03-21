@@ -1,0 +1,182 @@
+{
+  "design_name": "07_dvfs_controller",
+  "total_mutants": 32,
+  "killed": 12,
+  "survived": 20,
+  "errors": 0,
+  "mutation_score": 37.5,
+  "by_category": {
+    "relational_op": {
+      "total": 10,
+      "killed": 1,
+      "survived": 9,
+      "errors": 0
+    },
+    "conditional_negation": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 14,
+      "killed": 5,
+      "survived": 9,
+      "errors": 0
+    },
+    "constant_bit": {
+      "total": 3,
+      "killed": 3,
+      "survived": 0,
+      "errors": 0
+    },
+    "arithmetic_op": {
+      "total": 4,
+      "killed": 2,
+      "survived": 2,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 25,
+      "category": "relational_op",
+      "original": "if (workload < 32)",
+      "mutated": "if (workload <= 32)",
+      "description": "Line 25: < -> <="
+    },
+    {
+      "line": 27,
+      "category": "relational_op",
+      "original": "else if (workload < 64)",
+      "mutated": "else if (workload <= 64)",
+      "description": "Line 27: < -> <="
+    },
+    {
+      "line": 29,
+      "category": "relational_op",
+      "original": "else if (workload < 96)",
+      "mutated": "else if (workload <= 96)",
+      "description": "Line 29: < -> <="
+    },
+    {
+      "line": 31,
+      "category": "relational_op",
+      "original": "else if (workload < 128)",
+      "mutated": "else if (workload <= 128)",
+      "description": "Line 31: < -> <="
+    },
+    {
+      "line": 33,
+      "category": "relational_op",
+      "original": "else if (workload < 160)",
+      "mutated": "else if (workload <= 160)",
+      "description": "Line 33: < -> <="
+    },
+    {
+      "line": 35,
+      "category": "relational_op",
+      "original": "else if (workload < 192)",
+      "mutated": "else if (workload <= 192)",
+      "description": "Line 35: < -> <="
+    },
+    {
+      "line": 37,
+      "category": "relational_op",
+      "original": "else if (workload < 224)",
+      "mutated": "else if (workload <= 224)",
+      "description": "Line 37: < -> <="
+    },
+    {
+      "line": 45,
+      "category": "stuck_at_zero",
+      "original": "current_level <= 3'd0;",
+      "mutated": "current_level <= 0;",
+      "description": "Line 45: stuck-at-zero"
+    },
+    {
+      "line": 46,
+      "category": "stuck_at_zero",
+      "original": "freq_sel <= 3'd0;",
+      "mutated": "freq_sel <= 0;",
+      "description": "Line 46: stuck-at-zero"
+    },
+    {
+      "line": 47,
+      "category": "stuck_at_zero",
+      "original": "voltage_sel <= 3'd0;",
+      "mutated": "voltage_sel <= 0;",
+      "description": "Line 47: stuck-at-zero"
+    },
+    {
+      "line": 48,
+      "category": "stuck_at_zero",
+      "original": "throttled <= 1'b0;",
+      "mutated": "throttled <= 0;",
+      "description": "Line 48: stuck-at-zero"
+    },
+    {
+      "line": 49,
+      "category": "stuck_at_zero",
+      "original": "power_est <= 8'd0;",
+      "mutated": "power_est <= 0;",
+      "description": "Line 49: stuck-at-zero"
+    },
+    {
+      "line": 52,
+      "category": "relational_op",
+      "original": "if (temperature >= temp_threshold) begin",
+      "mutated": "if (temperature > temp_threshold) begin",
+      "description": "Line 52: >= -> >"
+    },
+    {
+      "line": 54,
+      "category": "relational_op",
+      "original": "if (current_level > 3'd2)",
+      "mutated": "if (current_level >= 3'd2)",
+      "description": "Line 54: > -> >="
+    },
+    {
+      "line": 55,
+      "category": "arithmetic_op",
+      "original": "current_level <= current_level - 1;  // ramp down one step per cycle",
+      "mutated": "current_level <= current_level + 1;  // ramp down one step per cycle",
+      "description": "Line 55: - -> +"
+    },
+    {
+      "line": 55,
+      "category": "stuck_at_zero",
+      "original": "current_level <= current_level - 1;  // ramp down one step per cycle",
+      "mutated": "current_level <= 0;",
+      "description": "Line 55: stuck-at-zero"
+    },
+    {
+      "line": 57,
+      "category": "stuck_at_zero",
+      "original": "current_level <= current_level;       // hold at floor",
+      "mutated": "current_level <= 0;",
+      "description": "Line 57: stuck-at-zero"
+    },
+    {
+      "line": 59,
+      "category": "stuck_at_zero",
+      "original": "throttled <= 1'b0;",
+      "mutated": "throttled <= 0;",
+      "description": "Line 59: stuck-at-zero"
+    },
+    {
+      "line": 67,
+      "category": "arithmetic_op",
+      "original": "current_level <= current_level - 1;",
+      "mutated": "current_level <= current_level + 1;",
+      "description": "Line 67: - -> +"
+    },
+    {
+      "line": 67,
+      "category": "stuck_at_zero",
+      "original": "current_level <= current_level - 1;",
+      "mutated": "current_level <= 0;",
+      "description": "Line 67: stuck-at-zero"
+    }
+  ]
+}

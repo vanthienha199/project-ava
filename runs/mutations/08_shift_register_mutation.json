@@ -1,0 +1,31 @@
+{
+  "design_name": "08_shift_register",
+  "total_mutants": 2,
+  "killed": 1,
+  "survived": 1,
+  "errors": 0,
+  "mutation_score": 50.0,
+  "by_category": {
+    "conditional_negation": {
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 1,
+      "killed": 0,
+      "survived": 1,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 19,
+      "category": "stuck_at_zero",
+      "original": "data_out <= 8'b0;",
+      "mutated": "data_out <= 0;",
+      "description": "Line 19: stuck-at-zero"
+    }
+  ]
+}

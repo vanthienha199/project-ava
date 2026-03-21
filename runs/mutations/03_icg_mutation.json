@@ -1,0 +1,23 @@
+{
+  "design_name": "03_icg",
+  "total_mutants": 7,
+  "killed": 7,
+  "survived": 0,
+  "errors": 0,
+  "mutation_score": 100.0,
+  "by_category": {
+    "stuck_at_zero": {
+      "total": 3,
+      "killed": 3,
+      "survived": 0,
+      "errors": 0
+    },
+    "bitwise_vs_logical": {
+      "total": 4,
+      "killed": 4,
+      "survived": 0,
+      "errors": 0
+    }
+  },
+  "survived_details": []
+}

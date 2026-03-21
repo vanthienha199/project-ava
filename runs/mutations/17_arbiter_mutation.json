@@ -1,0 +1,107 @@
+{
+  "design_name": "17_arbiter",
+  "total_mutants": 25,
+  "killed": 14,
+  "survived": 11,
+  "errors": 0,
+  "mutation_score": 56.0,
+  "by_category": {
+    "constant_bit": {
+      "total": 18,
+      "killed": 10,
+      "survived": 8,
+      "errors": 0
+    },
+    "conditional_negation": {
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "errors": 0
+    },
+    "stuck_at_zero": {
+      "total": 5,
+      "killed": 2,
+      "survived": 3,
+      "errors": 0
+    }
+  },
+  "survived_details": [
+    {
+      "line": 29,
+      "category": "constant_bit",
+      "original": "else if (req[3]) begin grant_next = 4'b1000; valid_next = 1'b1; end",
+      "mutated": "else if (req[3]) begin grant_next = 4'b1000; valid_next = 1'b0; end",
+      "description": "Line 29: 1'b1 -> 1'b0"
+    },
+    {
+      "line": 34,
+      "category": "constant_bit",
+      "original": "else if (req[3]) begin grant_next = 4'b1000; valid_next = 1'b1; end",
+      "mutated": "else if (req[3]) begin grant_next = 4'b1000; valid_next = 1'b0; end",
+      "description": "Line 34: 1'b1 -> 1'b0"
+    },
+    {
+      "line": 35,
+      "category": "constant_bit",
+      "original": "else if (req[0]) begin grant_next = 4'b0001; valid_next = 1'b1; end",
+      "mutated": "else if (req[0]) begin grant_next = 4'b0001; valid_next = 1'b0; end",
+      "description": "Line 35: 1'b1 -> 1'b0"
+    },
+    {
+      "line": 39,
+      "category": "constant_bit",
+      "original": "else if (req[3]) begin grant_next = 4'b1000; valid_next = 1'b1; end",
+      "mutated": "else if (req[3]) begin grant_next = 4'b1000; valid_next = 1'b0; end",
+      "description": "Line 39: 1'b1 -> 1'b0"
+    },
+    {
+      "line": 40,
+      "category": "constant_bit",
+      "original": "else if (req[0]) begin grant_next = 4'b0001; valid_next = 1'b1; end",
+      "mutated": "else if (req[0]) begin grant_next = 4'b0001; valid_next = 1'b0; end",
+      "description": "Line 40: 1'b1 -> 1'b0"
+    },
+    {
+      "line": 41,
+      "category": "constant_bit",
+      "original": "else if (req[1]) begin grant_next = 4'b0010; valid_next = 1'b1; end",
+      "mutated": "else if (req[1]) begin grant_next = 4'b0010; valid_next = 1'b0; end",
+      "description": "Line 41: 1'b1 -> 1'b0"
+    },
+    {
+      "line": 46,
+      "category": "constant_bit",
+      "original": "else if (req[1]) begin grant_next = 4'b0010; valid_next = 1'b1; end",
+      "mutated": "else if (req[1]) begin grant_next = 4'b0010; valid_next = 1'b0; end",
+      "description": "Line 46: 1'b1 -> 1'b0"
+    },
+    {
+      "line": 47,
+      "category": "constant_bit",
+      "original": "else if (req[2]) begin grant_next = 4'b0100; valid_next = 1'b1; end",
+      "mutated": "else if (req[2]) begin grant_next = 4'b0100; valid_next = 1'b0; end",
+      "description": "Line 47: 1'b1 -> 1'b0"
+    },
+    {
+      "line": 55,
+      "category": "stuck_at_zero",
+      "original": "grant        <= 4'b0000;",
+      "mutated": "grant        <= 0;",
+      "description": "Line 55: stuck-at-zero"
+    },
+    {
+      "line": 56,
+      "category": "stuck_at_zero",
+      "original": "valid        <= 1'b0;",
+      "mutated": "valid        <= 0;",
+      "description": "Line 56: stuck-at-zero"
+    },
+    {
+      "line": 57,
+      "category": "stuck_at_zero",
+      "original": "priority_ptr <= 2'd0;",
+      "mutated": "priority_ptr <= 0;",
+      "description": "Line 57: stuck-at-zero"
+    }
+  ]
+}
