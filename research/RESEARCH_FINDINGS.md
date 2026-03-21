@@ -192,7 +192,7 @@ Return TB
 | 6 | UART transmitter | Open source | Protocol verification |
 | 7 | SPI master | Open source | Multi-signal protocol |
 
-### Tier 3: Power-Aware (the AMD angle)
+### Tier 3: Power-Aware
 | # | Design | Source | Why |
 |---|---|---|---|
 | 8 | Clock gating cell (ICG) | github.com/drvasanthi/iiitb_cg | Basic power management |

@@ -21,3 +21,6 @@ runs/
 
 # Cloned external repos
 research/iiitb_cg/
+
+# Progress file (local context only)
+PROGRESS.md

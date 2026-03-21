@@ -5,7 +5,7 @@
 2. `/Users/hale/projects/project-ava/research/RESEARCH_FINDINGS.md` — cocotb 2.0 traps, CorrectBench algorithm, prompt rules
 
 ## What This Is
-AI agent that generates cocotb (Python) verification testbenches for Verilog designs, runs Icarus Verilog simulation, and self-corrects until tests pass. For ACM club (AMD-funded) + Dr. Wu's Unary Lab (UCF).
+AI agent that generates cocotb (Python) verification testbenches for Verilog designs, runs Icarus Verilog simulation, and self-corrects until tests pass.
 
 ## Environment
 - **Venv:** `source /Users/hale/projects/project-ava/venv/bin/activate` (Python 3.13 — cocotb 2.0 needs ≤3.13)

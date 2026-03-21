@@ -562,9 +562,9 @@
                 <h2>Autonomous Verification Agent</h2>
                 <span class="highlight" id="hero-designs">Loading...</span>
                 <span class="highlight-sub" id="hero-tests">Loading test data...</span>
-                <p>First AI agent to verify power-aware RTL designs — DVFS controllers, clock gating,
-                   power state machines, and PWM generators. No other tool in academia or industry
-                   has achieved this. Self-correcting pipeline with failure taxonomy.</p>
+                <p>Upload a Verilog design + natural language spec. The agent generates a cocotb testbench,
+                   simulates with Icarus Verilog, and self-corrects until all tests pass. Supports
+                   combinational, sequential, protocol, and power-aware designs.</p>
             </section>
 
             <!-- Stats Grid -->
@@ -655,95 +655,89 @@
                 </div>
             </section>
 
-            <!-- Competitive Landscape -->
+            <!-- Related Work -->
             <section class="competitive-section">
-                <h2>// Competitive Landscape (March 2026)</h2>
+                <h2>// Related Open-Source Tools</h2>
                 <table class="comp-table">
                     <thead>
                         <tr>
                             <th>Tool</th>
-                            <th>Type</th>
-                            <th>Pass Rate</th>
-                            <th>Power-Aware</th>
+                            <th>Approach</th>
+                            <th>Reported Pass Rate</th>
                             <th>Self-Correction</th>
-                            <th>Open Source</th>
+                            <th>Mutation Testing</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td class="ava">Project Ava</td>
-                            <td>Agent</td>
+                            <td>LLM agent + cocotb</td>
                             <td class="ava" id="comp-passrate">--</td>
-                            <td class="ava" id="comp-power">--</td>
                             <td class="ava">Yes (3+10)</td>
-                            <td class="ava">Yes</td>
+                            <td class="ava">Yes (7 categories)</td>
                         </tr>
-                        <tr><td>ConfiBench</td><td>Academic</td><td>72%</td><td class="zero">0</td><td>Limited</td><td>Yes</td></tr>
-                        <tr><td>CorrectBench</td><td>Academic</td><td>70%</td><td class="zero">0</td><td>Yes (3+10)</td><td>Yes</td></tr>
-                        <tr><td>AutoBench</td><td>Academic</td><td>52%</td><td class="zero">0</td><td>No</td><td>Yes</td></tr>
-                        <tr><td>Cadence ChipStack</td><td>Commercial</td><td>Unknown</td><td>Unknown</td><td>Yes</td><td class="zero">No ($$$)</td></tr>
-                        <tr><td>ChipAgents</td><td>Startup ($74M)</td><td>Unknown</td><td>Unknown</td><td>Yes</td><td class="zero">No ($$$)</td></tr>
+                        <tr><td>ConfiBench</td><td>Confidence masking</td><td>72%</td><td>Limited</td><td>No</td></tr>
+                        <tr><td>CorrectBench</td><td>LLM + correction</td><td>70%</td><td>Yes (3+10)</td><td>No</td></tr>
+                        <tr><td>AutoBench</td><td>LLM generation</td><td>52%</td><td>No</td><td>No</td></tr>
                     </tbody>
                 </table>
             </section>
 
             <!-- Key Insights -->
             <section class="insight-section">
-                <h2>// Key Discoveries</h2>
+                <h2>// How It Works</h2>
                 <div class="insight-grid">
                     <div class="insight-card">
-                        <h3>cocotb 2.0 API Trap</h3>
+                        <h3>cocotb 2.0 Compatibility</h3>
                         <div class="metric">8 Fixes</div>
-                        <p>LLMs always generate cocotb 1.x code that crashes. Our generator
-                           auto-fixes 8 known breaking changes (units vs unit, fork vs start_soon,
-                           .value.integer, etc.) that no other tool handles.</p>
+                        <p>LLMs tend to generate cocotb 1.x code. The generator auto-fixes
+                           8 known breaking changes (units vs unit, fork vs start_soon,
+                           .value.integer, etc.) before simulation.</p>
                     </div>
                     <div class="insight-card">
-                        <h3>Self-Correction Works</h3>
+                        <h3>Self-Correction</h3>
                         <div class="metric" id="insight-correction">--</div>
-                        <p>Designs needing corrections still recover to full pass.
-                           The two-tier CorrectBench algorithm is validated.</p>
+                        <p>When tests fail, the agent feeds errors back to the LLM
+                           and retries — up to 3 corrections and 10 full reboots.</p>
                     </div>
                     <div class="insight-card">
-                        <h3>Verification Cost</h3>
-                        <div class="metric">70-80%</div>
-                        <p>Verification is 70-80% of the VLSI design cycle (AMD confirmed).
-                           Industry uses 3 verification engineers per 1 designer. A failed
-                           mask re-spin costs $1M+. AI verification saves millions.</p>
+                        <h3>Mutation Testing</h3>
+                        <div class="metric">7 Types</div>
+                        <p>Built-in mutation engine injects bugs into Verilog source
+                           (relational, logical, arithmetic, bit flips, stuck-at, etc.)
+                           to measure how thorough the generated tests are.</p>
                     </div>
                     <div class="insight-card">
-                        <h3>DVFS Is the Gap</h3>
-                        <div class="metric">FIRST</div>
-                        <p>No AI tool — academic or commercial — verifies DVFS controllers,
-                           clock gating, or power state machines. Derek Martin at AMD works
-                           on exactly this hardware. Project Ava fills an industry-wide gap.</p>
+                        <h3>Failure Taxonomy</h3>
+                        <div class="metric">9 Categories</div>
+                        <p>Every failure is classified: SYNTAX, COCOTB_API,
+                           SIGNAL_ACCESS, TIMING, LOGIC, COMPILE,
+                           IMPORT, TIMEOUT, UNKNOWN.</p>
                     </div>
                 </div>
             </section>
 
-            <!-- Why It Matters -->
+            <!-- Design Categories -->
             <section class="gap-section">
-                <h2>// Why Power-Aware Verification Matters</h2>
+                <h2>// Design Categories Tested</h2>
                 <div class="gap-grid">
                     <div class="gap-card">
-                        <h3>Lit Silicon Effect</h3>
-                        <div class="metric">25&deg;C</div>
-                        <p>Thermal imbalance causes DVFS throttling, creating GPU stragglers
-                           that slow entire training jobs. Ava verifies the DVFS hardware
-                           that prevents this.</p>
+                        <h3>Protocol Designs</h3>
+                        <div class="metric">SPI, I2C, UART</div>
+                        <p>Communication protocols with handshaking, timing constraints,
+                           and multi-cycle transactions.</p>
                     </div>
                     <div class="gap-card">
-                        <h3>AMD IP Pipeline</h3>
-                        <div class="metric">4 Pillars</div>
-                        <p>AMD wants talent, curriculum, IP pipeline, and AI adoption from UCF.
-                           Project Ava IS the IP pipeline — research that turns into product.</p>
+                        <h3>Power-Aware Designs</h3>
+                        <div class="metric">5 Designs</div>
+                        <p>DVFS controllers, clock gating cells, power state machines,
+                           frequency dividers, and PWM generators.</p>
                     </div>
                     <div class="gap-card">
-                        <h3>Failure Taxonomy</h3>
-                        <div class="metric">9 Categories</div>
-                        <p>SYNTAX, COCOTB_API, SIGNAL_ACCESS, TIMING, LOGIC, COMPILE,
-                           IMPORT, TIMEOUT, UNKNOWN. CorrectBench can't explain its 28%
-                           failure rate. We categorize every error.</p>
+                        <h3>Crypto / Complex</h3>
+                        <div class="metric">929 Lines</div>
+                        <p>SHA-256 core from secworks (ASIC-proven, BSD-2-Clause),
+                           tested with NIST FIPS 180-4 vectors.</p>
                     </div>
                 </div>
             </section>
@@ -751,8 +745,8 @@
 
         <footer>
             <p>PROJECT AVA v1.0.0 // AI-Powered Hardware Verification Agent</p>
-            <p>Built by Ha Le // University of Central Florida // Unary Lab (Dr. Di Wu)</p>
-            <p>Supported by AMD Orlando // <a href="https://github.com/vanthienha199/project-ava">GitHub</a></p>
+            <p>Built by Ha Le // University of Central Florida</p>
+            <p><a href="https://github.com/vanthienha199/project-ava">GitHub</a></p>
         </footer>
     </div>
 
@@ -838,22 +832,22 @@
                 });
                 const latestArr = Object.values(latestRuns);
 
-                // Stats
-                const totalDesigns = latestArr.length || designList.length;
-                const totalTests = latestArr.reduce((s, r) => s + (r.total_tests || 0), 0);
-                const totalPassed = latestArr.reduce((s, r) => s + (r.pass_count || 0), 0);
+                // Stats — only count passing runs
+                const passingRuns = latestArr.filter(r => r.passed);
+                const totalDesigns = passingRuns.length;
+                const totalTests = passingRuns.reduce((s, r) => s + (r.total_tests || 0), 0);
+                const totalPassed = passingRuns.reduce((s, r) => s + (r.pass_count || 0), 0);
                 const passRate = totalTests > 0 ? Math.round((totalPassed / totalTests) * 100) : 0;
                 const powerCount = designList.filter(d => (d.category || '').toLowerCase().includes('power')).length
-                    || latestArr.filter(r => (r.design_name || '').match(/icg|dvfs|power|freq|pwm/i)).length;
+                    || passingRuns.filter(r => (r.design_name || '').match(/icg|dvfs|power|freq|pwm/i)).length;
 
-                document.getElementById('hero-designs').textContent = totalDesigns + '/' + totalDesigns + ' DESIGNS';
-                document.getElementById('hero-tests').textContent = totalPassed + '/' + totalTests + ' TESTS // ' + passRate + '% PASS RATE';
+                document.getElementById('hero-designs').textContent = totalDesigns + ' DESIGNS VERIFIED';
+                document.getElementById('hero-tests').textContent = totalPassed + '/' + totalTests + ' TESTS PASSING';
                 document.getElementById('stat-designs').textContent = totalDesigns;
                 document.getElementById('stat-tests').textContent = totalPassed;
                 document.getElementById('stat-power').textContent = powerCount;
                 document.getElementById('stat-passrate').textContent = passRate + '%';
                 document.getElementById('comp-passrate').textContent = passRate + '%';
-                document.getElementById('comp-power').textContent = powerCount + ' designs';
 
                 // Correction insight
                 const corrected = latestArr.filter(r => (r.corrections || 0) > 0).length;
