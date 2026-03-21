@@ -444,11 +444,18 @@ Anthropic API          — $5 credits, key in ~/.zshrc
 
 ### Done (Session 5 — March 20, 2026 evening)
 - [x] **3 new golden designs** — I2C master (10/10), round-robin arbiter (11/11), SRAM memory controller (14/14)
-- [x] **18/18 designs, 182/182 tests, 100% pass rate** — all 3 new designs self-corrected successfully
-- [x] **API retry with backoff** — llm.py now retries on HTTP 429/529 with exponential backoff (5s, 10s, 20s, 40s, 80s)
-- [x] **claude_cli timeout increased** — 300s → 600s for complex designs (I2C, arbiter)
-- [x] **Results uploaded to Supabase** — all 18 designs in database
-- [x] **PROGRESS.md updated** — session 5 context
+- [x] **SHA-256 core** (secworks, 929 lines, BSD-2, ASIC-proven in 40nm) — 9/9 tests with NIST FIPS 180-4 vectors
+- [x] **19/19 designs, 191/191 tests, 100% pass rate**
+- [x] **Mutation testing engine** — first open-source Verilog mutation tester for cocotb
+- [x] **Mutation testing on all 19 designs** — 546 mutants, 389 killed, 71.2% overall score
+- [x] **4 designs at 100% mutation score** — adder, ALU, ICG, SHA-256
+- [x] **SHA-256: 96 mutants, 100% killed** — strongest testbench in the suite
+- [x] **Toggle coverage analyzer** — VCD parsing for signal toggle coverage
+- [x] **API backend switched to official anthropic SDK** — proper timeout handling
+- [x] **Testbenches for all 19 designs** saved in runs/
+- [x] **API retry with backoff** — SDK handles 429/529 automatically
+- [x] **Results uploaded to Supabase** — all 19 designs in database
+- [x] **17 commits pushed to GitHub**
 
 ### Next (High Priority)
 - [ ] **Buy domain** — projectava.dev (~$12/yr), point to Netlify
@@ -456,8 +463,8 @@ Anthropic API          — $5 credits, key in ~/.zshrc
 - [ ] **Clean up Supabase data** — Remove or properly mark DeepSeek benchmark failures
 
 ### Research / Paper
-- [ ] **Write up results** — 18/18 (100%) vs CorrectBench 70%, power-aware gap, failure taxonomy, Claude vs DeepSeek
-- [ ] **Present to AMD panel** — Live demo on unseen design
+- [ ] **Write up results** — 19/19 (100%), 71.2% mutation score, power-aware gap, Claude vs DeepSeek
+- [ ] **Present to AMD panel** — Live demo on unseen design + mutation score data
 - [ ] **Read agentic AI infrastructure papers** — for Dr. Wu's research direction (separate from Ava)
 
 ### Stretch
