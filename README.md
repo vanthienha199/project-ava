@@ -6,6 +6,8 @@ Upload a Verilog file and a plain-English spec on the website — the agent hand
 
 **Live:** [projectava.dev](https://projectava.dev)
 
+![Dashboard](docs/images/dashboard.png)
+
 ---
 
 ## How It Works
@@ -17,6 +19,10 @@ Upload a Verilog file and a plain-English spec on the website — the agent hand
 5. Results stream live to the web dashboard
 
 The cloud watcher runs on Fly.io and polls Supabase for new uploads, so no terminal is needed.
+
+![Upload Page](docs/images/upload_page.png)
+
+![Live Page](docs/images/live_page.png)
 
 ---
 
